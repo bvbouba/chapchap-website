@@ -1,0 +1,5 @@
+query getAttributeValueById($id: ID!) {
+	attributeValue(id: $id) {
+		...AssignedAttributeValue
+	}
+}

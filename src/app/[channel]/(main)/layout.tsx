@@ -1,10 +1,11 @@
 import { type ReactNode } from "react";
-import { Footer } from "@/ui/components/Footer";
+import { Providers } from "./Providers";
 import { Header } from "@/ui/components/Header";
+import { Footer } from "@/ui/components/Footer";
 
 export const metadata = {
-	title: "Saleor Storefront example",
-	description: "Starter pack for building performant e-commerce experiences with Saleor.",
+	title: "ChapChap Tickets",
+	description: "Comparez, réservez et voyagez facilement.",
 };
 
 export default async function RootLayout(props: {
@@ -14,12 +15,12 @@ export default async function RootLayout(props: {
 	const channel = (await props.params).channel;
 
 	return (
-		<>
+		<Providers>
 			<Header channel={channel} />
 			<div className="flex min-h-[calc(100dvh-64px)] flex-col">
 				<main className="flex-1">{props.children}</main>
 				<Footer channel={channel} />
 			</div>
-		</>
+		</Providers>
 	);
 }
