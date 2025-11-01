@@ -1,33 +1,20 @@
-import { ProductListByCollectionDocument } from "@/gql/graphql";
-import { executeGraphQL } from "@/lib/graphql";
-import { ProductList } from "@/ui/components/ProductList";
+import HeroSearch from "@/ui/components/HeroSearch/HeroSearch";
 
 export const metadata = {
-	title: "ACME Storefront, powered by Saleor & Next.js",
+	title: "Chapchap Tickets – Trouvez et réservez votre prochain trajet",
 	description:
-		"Storefront Next.js Example for building performant e-commerce experiences with Saleor - the composable, headless commerce platform for global brands.",
-};
-
-export default async function Page(props: { params: Promise<{ channel: string }> }) {
-	const params = await props.params;
-	const data = await executeGraphQL(ProductListByCollectionDocument, {
-		variables: {
-			slug: "featured-products",
-			channel: params.channel,
-		},
-		revalidate: 60,
-	});
-
-	if (!data.collection?.products) {
-		return null;
-	}
-
-	const products = data.collection?.products.edges.map(({ node: product }) => product);
-
+	  "Explorez, comparez et réservez vos trajets facilement avec ChapChap Tickes. Découvrez des destinations populaires, des offres avantageuses et une expérience fluide de réservation.",
+  };
+  
+  export default async function Page() {
 	return (
+	  <>
+		<HeroSearch />
 		<section className="mx-auto max-w-7xl p-8 pb-16">
-			<h2 className="sr-only">Product list</h2>
-			<ProductList products={products} />
+		  {/* <h2 className="sr-only">Destinations populaires</h2>
+		  <ProductList products={products} /> */}
 		</section>
+	  </>
 	);
-}
+  }
+  
