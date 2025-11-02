@@ -14,13 +14,12 @@ import {
 } from "./attributes";
 import { parseQuerySort, serializeQuerySort, UrlSorting } from "./sorting";
 import { FilterPill } from "./FilterPills";
-import { AssignedAttributeValueFragment, AttributeFilterFragment, OrderDirection, ProductFilterInput, ProductOrderField } from "@/gql/graphql";
+import { AssignedAttributeValueFragment, AttributeFilterFragment, OrderDirection, ProductVariantSortField, ProductVariantWhereInput } from "@/gql/graphql";
 import { ProductCollection } from "../../ProductCollection";
 import { useTripSearch } from "@/context/TripSearchContext";
 import SimpleHeroSearch from "../../HeroSearch/SimpleHeroSearch";
 import TripHeader from "../../trips/TripHeader";
 import FilterElement from "./FilterElement";
-import SortingDropdown from "./SortingDropdown";
 
 export interface FilteredProductListProps {
   attributeFiltersData: AttributeFilterFragment[];
@@ -67,7 +66,7 @@ export function FilteredProductList({
     queryTypes.boolean.withDefault(false)
   );
 
-  const [productsFilter, setProductsFilter] = useState<ProductFilterInput>();
+  const [productVariantsWhere, setProductVariantsWhere] = useState<ProductVariantWhereInput>();
 
   const pills: FilterPill[] = getPillsData(queryFilters, attributeFiltersData);
 
@@ -94,8 +93,8 @@ export function FilteredProductList({
   }, [originData, destinationData, date, setData]);
 
   useEffect(() => {
-    setProductsFilter({
-      attributes: queryFilters.filter((filter) => filter.values?.length),
+    setProductVariantsWhere({
+      attributes: queryFilters.filter((filter) => filter.value.slug.oneOf.length),
       ...(categoryIDs?.length && { categories: categoryIDs }),
       ...(collectionIDs?.length && { collections: collectionIDs }),
     });
@@ -108,7 +107,7 @@ export function FilteredProductList({
       if (filter.slug !== attributeSlug) {
         return [...result, filter];
       }
-      const newFilterValues = filter.values.filter((value) => value !== choiceSlug);
+      const newFilterValues = filter.value.slug.oneOf.filter((value) => value !== choiceSlug);
       if (newFilterValues?.length) {
         return [...result, { ...filter, values: newFilterValues }];
       }
@@ -133,7 +132,7 @@ export function FilteredProductList({
     // if attribute was not used before, add it
     const existingFilter = queryFilters.find((filter) => filter.slug === attributeSlug);
     if (!existingFilter) {
-      setQueryFilters([...queryFilters, { slug: attributeSlug, values: [choiceSlug] }], {
+      setQueryFilters([...queryFilters, { slug: attributeSlug, value:{slug: {oneOf: [choiceSlug]} }}], {
         scroll: false,
         shallow: true,
       });
@@ -141,7 +140,7 @@ export function FilteredProductList({
     }
 
     // if its already here, modify values list
-    existingFilter.values = [...existingFilter.values, choiceSlug];
+    existingFilter.value.slug.oneOf = [...existingFilter.value.slug.oneOf, choiceSlug];
     setQueryFilters(queryFilters, {
       scroll: false,
       shallow: true,
@@ -160,7 +159,7 @@ export function FilteredProductList({
     });
   };
 
-  if (!productsFilter) {
+  if (!productVariantsWhere) {
     return null;
   }
 
@@ -195,14 +194,14 @@ export function FilteredProductList({
           </aside>
          
           <ProductCollection
-            filter={productsFilter}
+            where={productVariantsWhere}
             sortBy={sortBy || undefined}
             setCounter={setItemsCounter}
             perPage={40}
             originSlug={data.origin.slug}
             destinationSlug={data.destination.slug}
             date={data.date}
-            optionToggle={(field?: ProductOrderField, direction?: OrderDirection) => {
+            optionToggle={(field?: ProductVariantSortField, direction?: OrderDirection) => {
               setSortBy(field && direction ? { field, direction } : null);
             }}
             chosen={sortBy}

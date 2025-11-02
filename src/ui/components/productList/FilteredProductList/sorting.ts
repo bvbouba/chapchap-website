@@ -1,13 +1,13 @@
-import { OrderDirection, ProductOrderField } from "@/gql/graphql";
+import { OrderDirection, ProductVariantSortField } from "@/gql/graphql";
 
 export interface UrlSorting {
-  field: ProductOrderField;
+  field: ProductVariantSortField;
   direction: OrderDirection;
 }
 
 export interface SortingOption {
   label: string;
-  field?: ProductOrderField;
+  field?: ProductVariantSortField;
   direction?: OrderDirection;
   chosen: boolean;
 }
@@ -15,7 +15,7 @@ export interface SortingOption {
 export const getSortingOptions = (chosenSorting: UrlSorting | null) => {
   const options: SortingOption[] = [
     { label: "Popularité", chosen: false },
-    { label: "Moins cher", field: ProductOrderField.Price, direction: OrderDirection.Asc, chosen: false },
+    { label: "Moins cher", field: ProductVariantSortField.Price, direction: OrderDirection.Asc, chosen: false },
   ];
 
   let isChosenSet = false;
@@ -41,7 +41,7 @@ export const parseQuerySort = (query: string | null): UrlSorting | null => {
     return null;
   }
   const sorting: UrlSorting = {
-    field: field as ProductOrderField,
+    field: field as ProductVariantSortField,
     direction: direction as OrderDirection,
   };
 

@@ -6,7 +6,11 @@ import { AttributeFilterFragment } from "@/gql/graphql";
 
 export interface UrlFilter {
   slug: string;
-  values: string[];
+  value: {
+    slug:{
+      oneOf:string[]
+    }
+  };
 }
 
 export const getPillsData = (
@@ -16,7 +20,7 @@ export const getPillsData = (
   urlFilters.reduce((result: FilterPill[], filter: UrlFilter) => {
     const choiceAttribute = attributeFiltersData.find((attr) => attr.slug === filter.slug);
     const attrName = choiceAttribute ? choiceAttribute.name : filter.slug;
-    const newPills = filter.values.map((value) => {
+    const newPills = filter.value.slug.oneOf.map((value) => {
       const attrChoice = choiceAttribute?.choices?.edges.find(
         (choice) => choice.node.slug === value
       );
@@ -52,11 +56,18 @@ export const parseQueryAttributeFilters = (query: string): UrlFilter[] => {
     const splitted = attributeWithValues.split(".");
     const attributeFilter = { slug: splitted[0], values: splitted.slice(1) };
     if (attributeFilter.values.length > 0) {
-      filters.push(attributeFilter);
+      filters.push({
+        slug:splitted[0],
+        value: {
+          slug: {
+            oneOf: splitted.slice(1),
+          },
+        },
+      });
     }
   });
   return filters;
 };
 
 export const serializeQueryAttributeFilters = (values: UrlFilter[]): string =>
-  values.map((value) => [value.slug, ...value.values].join(".")).join(";");
+  values.map((value) => [value.slug, ...value.value.slug.oneOf].join(".")).join(";");

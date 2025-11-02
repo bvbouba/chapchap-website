@@ -6,10 +6,10 @@ import { Fragment, useState } from "react";
 import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 
 import { getSortingOptions, UrlSorting } from "./sorting";
-import { OrderDirection, ProductOrderField } from "@/gql/graphql";
+import { OrderDirection, ProductVariantSortField } from "@/gql/graphql";
 
 export interface SortingDropdownProps {
-  optionToggle: (field?: ProductOrderField, direction?: OrderDirection) => void;
+  optionToggle: (field?: ProductVariantSortField, direction?: OrderDirection) => void;
   chosen: UrlSorting | null;
 }
 

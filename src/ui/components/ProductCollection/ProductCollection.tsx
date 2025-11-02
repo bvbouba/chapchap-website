@@ -3,19 +3,20 @@
 import React, { useEffect, useState } from "react";
 import {
   OrderDirection,
-  ProductCollectionQuery,
-  ProductFilterInput,
-  ProductOrderField,
+  ProductVariantCollectionQuery,
+  ProductVariantSortField,
+  ProductVariantWhereInput,
 } from "@/gql/graphql";
 import { ProductList } from "../ProductList";
 import SortingDropdown from "../productList/FilteredProductList/SortingDropdown";
 import { UrlSorting } from "../productList/FilteredProductList/sorting";
 import { Pagination } from "./Pagination";
+import { mapEdgesToItems } from "@/lib/maps";
 
 export interface ProductCollectionProps {
-  filter?: ProductFilterInput;
+  where?: ProductVariantWhereInput;
   sortBy?: {
-    field: ProductOrderField;
+    field: ProductVariantSortField;
     direction?: OrderDirection;
   };
   allowMore?: boolean;
@@ -24,14 +25,14 @@ export interface ProductCollectionProps {
   originSlug: string;
   destinationSlug: string;
   date: string;
-  optionToggle: (field?: ProductOrderField, direction?: OrderDirection) => void;
+  optionToggle: (field?: ProductVariantSortField, direction?: OrderDirection) => void;
   chosen: UrlSorting | null;
 } 
   
 
 
 export function ProductCollection({
-  filter,
+  where,
   sortBy,
   setCounter,
   allowMore = true,
@@ -44,21 +45,24 @@ export function ProductCollection({
 }: ProductCollectionProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [data, setData] = useState<ProductCollectionQuery | null>(null);
+  const [data, setData] = useState<ProductVariantCollectionQuery | null>(null);
   const [afterCursor, setAfterCursor] = useState<string | null>(null);
-  const [variants, setVariants] = useState<any[]>([]);
 
   async function fetchProducts(cursor?: string) {
     try {
       setLoading(true);
       setError(null);
 
-      const updatedFilter = {
-        ...filter,
+      const updatedWhere:ProductVariantWhereInput = {
+        ...where,
         attributes: [
-          ...(filter?.attributes ?? []),
-          { slug: "departure-city", values: [originSlug] },
-          { slug: "arrival-city", values: [destinationSlug] },
+          ...(where?.attributes ?? []),
+          { slug: "departure-city", value:{slug:{oneOf:[originSlug]} }},
+          { slug: "arrival-city", value:{slug: {oneOf:[destinationSlug]}} },
+          { slug: "departure-time", value: { dateTime: {
+            gte: `${date}T00:00:00`,
+            lte: `${date}T23:59:59`,
+            } } },
         ],
       };
 
@@ -66,47 +70,34 @@ export function ProductCollection({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          filter: updatedFilter,
+          where: updatedWhere,
           sortBy,
           perPage,
           after: cursor,
-          date
+          channel:"ci"
         }),
       });
 
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-      const result = (await res.json()) as ProductCollectionQuery;
-      const products = result.products;
+      const result = (await res.json()) as ProductVariantCollectionQuery;
+      const productVariants = result.productVariants
+      setData(result)
 
-      // If fetching more, append new edges
-      if (cursor && data && products) {
+      if (cursor && data && productVariants) {
         setData({
           ...result,
-          products: {
-            ...products,
+          productVariants: {
+            ...productVariants,
             edges: [
-              ...(data.products?.edges ?? []),
-              ...(result.products?.edges ?? []),
+              ...(data.productVariants?.edges ?? []),
+              ...(result.productVariants?.edges ?? []),
             ],
           },
         });
       } else {
         setData(result);
       }
-
-      
-      if (!products || !products.edges.length) {
-        setVariants([]);
-        setLoading(false);
-        return;
-      }
-      const allVariants = products.edges.flatMap(
-        ({ node: product }: any) =>
-          product.productVariants?.edges.map(({ node }: any) => node) ?? []
-      );
-      
-      setVariants(allVariants);
 
     } catch (err) {
       console.error("Erreur:", err);
@@ -119,16 +110,16 @@ export function ProductCollection({
   useEffect(() => {
     fetchProducts();
       // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filter, sortBy,originSlug, destinationSlug, date]);
+  }, [where, sortBy,originSlug, destinationSlug, date]);
 
   useEffect(() => {
     if (setCounter) {
-      setCounter(data?.products?.totalCount || 0);
+      setCounter(data?.productVariants?.totalCount || 0);
     }
-  }, [data?.products?.totalCount]);
+  }, [data?.productVariants?.totalCount]);
 
   const onLoadMore = () => {
-    const nextCursor = data?.products?.pageInfo.endCursor || null;
+    const nextCursor = data?.productVariants?.pageInfo.endCursor || null;
    
     if(nextCursor) {
       setAfterCursor(nextCursor);
@@ -152,6 +143,8 @@ export function ProductCollection({
     );
   }
 
+  const variants = mapEdgesToItems(data?.productVariants);
+
   if (!variants.length) {
     return (
       <div className="mx-auto max-w-7xl p-8 text-center text-gray-500">
@@ -168,12 +161,12 @@ export function ProductCollection({
               optionToggle={optionToggle}
               chosen={chosen}
             />
-             {allowMore && data?.products?.pageInfo?.hasNextPage && (
+             {allowMore && data?.productVariants?.pageInfo?.hasNextPage && (
         <Pagination
           onLoadMore={onLoadMore}
-          pageInfo={data.products.pageInfo}
-          itemsCount={data.products.edges.length}
-          totalCount={data.products.totalCount || undefined}
+          pageInfo={data.productVariants.pageInfo}
+          itemsCount={data.productVariants.edges.length}
+          totalCount={data.productVariants.totalCount || undefined}
         />
       )} 
             </div>

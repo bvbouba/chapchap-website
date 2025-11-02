@@ -1,39 +1,35 @@
 import { NextResponse } from "next/server";
 import { executeGraphQL } from "@/lib/graphql";
 import {
-  ProductCollectionDocument,
-  ProductFilterInput,
-  ProductOrderField,
   OrderDirection,
+  ProductVariantWhereInput,
+  ProductVariantCollectionDocument,
+  ProductVariantSortField,
 } from "@/gql/graphql";
 
 interface ProductCollectionBody {
-  filter?: ProductFilterInput;
+  where?: ProductVariantWhereInput;
   sortBy?: {
-    field: ProductOrderField;
+    field: ProductVariantSortField;
     direction?: OrderDirection;
   };
   perPage?: number;
   after?: string | null;
-  date:string
+  channel:string
 }
 
 export async function POST(req: Request) {
   try {
     const body = (await req.json()) as ProductCollectionBody;
 
-    const { filter, sortBy, perPage = 4, after,date } = body;
+    const { where, sortBy, perPage = 4, after,channel } = body;
 
-    const result = await executeGraphQL(ProductCollectionDocument, {
+    const result = await executeGraphQL(ProductVariantCollectionDocument, {
       variables: {
-        filter,
+        where,
         first: perPage,
         after,
-        departureDate: {
-          gte: `${date}T00:00:00`,
-          lte: `${date}T23:59:59`,
-        },
-        channel: "ci",
+        channel,
         ...(sortBy?.field &&
           sortBy?.direction && {
             sortBy: {

@@ -3,7 +3,6 @@
 import type { ProductVariantListItemFragment } from "@/gql/graphql";
 import { formatMoney } from "@/lib/utils";
 import { ProductImageWrapper } from "../atoms/ProductImageWrapper";
-import { ArrowRight } from "lucide-react";
 
 export function ProductElement({
 	variant,
@@ -13,12 +12,11 @@ export function ProductElement({
 	loading: "eager" | "lazy";
 	priority?: boolean;
 }) {
-	const productAttributes = variant.product?.attributes || [];
-	const variantAttributes = variant.attributes || [];
+	const attributes = variant.attributes || [];
 
 	// Helper: get attribute value (name or value)
 	const getAttrValue = (
-		attrs: typeof productAttributes,
+		attrs: typeof attributes,
 		slug: string
 	): string | undefined => {
 		const found = attrs.find((attr) => attr.attribute?.slug === slug);
@@ -70,14 +68,12 @@ export function ProductElement({
 	};
 
 	// Extract attributes
-	// const origin = getAttrValue(productAttributes, "departure-city");
-	// const destination = getAttrValue(productAttributes, "arrival-city");
-	const durationRaw = getAttrValue(productAttributes, "estimated-duration"); // could be "150", "150min", "2h30"
-	const company = getAttrValue(productAttributes, "bus-operator");
+	const durationRaw = getAttrValue(attributes, "estimated-duration"); // could be "150", "150min", "2h30"
+	const company = getAttrValue(attributes, "bus-operator");
 
-	const departureStation = getAttrValue(variantAttributes, "departure-station");
-	const arrivalStation = getAttrValue(variantAttributes, "arrival-station");
-	const dateTime = getAttrValue(variantAttributes, "departure-time"); // ISO date-time
+	const departureStation = getAttrValue(attributes, "departure-station");
+	const arrivalStation = getAttrValue(attributes, "arrival-station");
+	const dateTime = getAttrValue(attributes, "departure-time"); // ISO date-time
 
 	// Compute times (UTC)
 	const departureDate = dateTime ? new Date(dateTime) : null;
