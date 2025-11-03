@@ -1,0 +1,16 @@
+fragment CategoryDetailsFragment on Category {
+  id
+  name
+  slug
+   metadata {
+    key
+    value
+     }
+}
+
+
+query CategoryBySlug($slug: String!) {
+  category(slug: $slug) {
+    ...CategoryDetailsFragment
+  }
+}

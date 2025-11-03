@@ -16,9 +16,9 @@ export const NavLinks = async ({ channel }: { channel: string }) => {
 	const items = (navLinks.menu?.items ?? []) as MenuItemWithChildren[];
 
 	const renderHref = (item: MenuItemFragment): string => {
-		if (item.category) return `/categories/${item.category.slug}`;
-		if (item.collection) return `/collections/${item.collection.slug}`;
-		if (item.page) return `/pages/${item.page.slug}`;
+		if (item.category) return `/${channel}/categories/${item.category.slug}`;
+		if (item.collection) return `/${channel}/collections/${item.collection.slug}`;
+		if (item.page) return `${channel}/pages/${item.page.slug}`;
 		if (item.url) return item.url;
 		return "#";
 	};
@@ -34,7 +34,7 @@ export const NavLinks = async ({ channel }: { channel: string }) => {
 				if (hasChildren) {
 					return (
 						<div key={item.id} className="group relative flex items-center">
-							<NavLink key={item.id} href={href}>
+							<NavLink key={item.id} href={"#"}>
 								{item.name}
 							</NavLink>
 

@@ -3,6 +3,14 @@ query getAttributeValueById($id: ID!) {
 		...AssignedAttributeValue
 	}
 }
+
+query getAttributeValueBySlug($slug: String!) {
+	attributeValue(slug: $slug) {
+		...AssignedAttributeValue
+	}
+}
+
+
 fragment AssignedAttributeValue on AttributeValue {
 	name
 	id

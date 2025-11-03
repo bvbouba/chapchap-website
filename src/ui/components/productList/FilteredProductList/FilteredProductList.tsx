@@ -20,6 +20,8 @@ import { useTripSearch } from "@/context/TripSearchContext";
 import SimpleHeroSearch from "../../HeroSearch/SimpleHeroSearch";
 import TripHeader from "../../trips/TripHeader";
 import FilterElement from "./FilterElement";
+import UpcomingTripsSection from "../../trips/UpcomingTripsSection";
+import SectionFilter from "../../trips/SectionFilter";
 
 export interface FilteredProductListProps {
   attributeFiltersData: AttributeFilterFragment[];
@@ -28,6 +30,7 @@ export interface FilteredProductListProps {
   originData: AssignedAttributeValueFragment | null | undefined;
   destinationData: AssignedAttributeValueFragment | null | undefined;
   date: string;
+  busOperator?: string;
 }
 
 export interface Filters {
@@ -46,6 +49,7 @@ export function FilteredProductList({
   originData,
   destinationData,
   date,
+  busOperator
 }: FilteredProductListProps) {
   const [queryFilters, setQueryFilters] = useQueryState("filters", {
     parse: parseQueryAttributeFilters,
@@ -95,12 +99,29 @@ export function FilteredProductList({
   useEffect(() => {
     setProductVariantsWhere({
       attributes: queryFilters.filter((filter) => filter.value.slug.oneOf.length),
-      ...(categoryIDs?.length && { categories: categoryIDs }),
-      ...(collectionIDs?.length && { collections: collectionIDs }),
+      // ...(categoryIDs?.length && { categories: categoryIDs }),
+      // ...(collectionIDs?.length && { collections: collectionIDs }),
     });
     // Eslint does not recognize stringified queryFilters, so we have to ignore it
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [inStockFilter, JSON.stringify(queryFilters), categoryIDs, collectionIDs]);
+
+  useEffect(() => {
+    if (
+      busOperator &&
+      !queryFilters.some((f) => f.slug === "bus-operator")
+    ) {
+      setQueryFilters(
+        [
+          ...queryFilters,
+          { slug: "bus-operator", value: { slug: { oneOf: [busOperator] } } },
+        ],
+        { scroll: false, shallow: true }
+      );
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [busOperator]);
+
 
   const removeAttributeFilter = (attributeSlug: string, choiceSlug: string) => {
     const newFilters = queryFilters.reduce((result: UrlFilter[], filter: UrlFilter) => {
@@ -164,49 +185,49 @@ export function FilteredProductList({
   }
 
   if (!data) return null;
+
+  const displayUpcomingTrip = !!categoryIDs?.length
   return (
     <>
       <SimpleHeroSearch data={data} />
-      <TripHeader destinationName={data.destination.name} date={data.date} />
-      <div className="mt-4">
-        <section className="flex flex-col md:flex-row w-full max-w-6xl mx-auto py-8 px-4 gap-6">
-          {/* ✅ Filters Sidebar */}
-          <aside className="mb-6 flex flex-col gap-4">
-            {/* Reset All Filters Button */}
-            {pills.length > 0 && <div className="border-b border-gray-200 mb-6">
-              <button
-                onClick={clearFilters}
-                className="py-2 text-[#97D700] px-4 rounded-md text-sm hover:text-red-600 transition"
-              >
-                Réinitialiser tous les filtres
-              </button>
-            </div>}
-            {/* Attribute Filters */}
-            {attributeFiltersData.map((attribute) => (
-              <FilterElement
-                key={attribute.id}
-                label={attribute.name || ""}
-                optionToggle={addAttributeFilter}
-                attributeSlug={attribute.slug!}
-                options={getFilterOptions(attribute, pills)}
-              />
-            ))}
-          </aside>
 
-          <ProductCollection
-            where={productVariantsWhere}
-            sortBy={sortBy || undefined}
-            setCounter={setItemsCounter}
-            perPage={2}
-            originSlug={data.origin.slug}
-            destinationSlug={data.destination.slug}
-            date={data.date}
-            optionToggle={(field?: ProductVariantSortField, direction?: OrderDirection) => {
-              setSortBy(field && direction ? { field, direction } : null);
-            }}
-            chosen={sortBy}
-          />
-        </section>
+
+      {displayUpcomingTrip ? (
+        <UpcomingTripsSection
+          originName={data.origin.name}
+          destinationName={data.destination.name}
+          initialDate={data.date}
+        />
+      ) : <TripHeader destinationName={data.destination.name} date={data.date} />}
+      <div className="mt-4">
+      <section
+  className={`flex w-full max-w-6xl mx-auto py-8 px-4 gap-6 
+    ${!displayUpcomingTrip ? "flex-col md:flex-row" : "justify-center"}`}
+>
+  {!displayUpcomingTrip && (
+    <SectionFilter
+      pills={pills}
+      clearFilters={clearFilters}
+      attributeFiltersData={attributeFiltersData}
+      addAttributeFilter={addAttributeFilter}
+    />
+  )}
+
+  <ProductCollection
+    where={productVariantsWhere}
+    sortBy={sortBy || undefined}
+    setCounter={setItemsCounter}
+    perPage={2}
+    originSlug={data.origin.slug}
+    destinationSlug={data.destination.slug}
+    date={data.date}
+    optionToggle={(field?: ProductVariantSortField, direction?: OrderDirection) => {
+      setSortBy(field && direction ? { field, direction } : null);
+    }}
+    chosen={sortBy}
+    displayUpcomingTrip={displayUpcomingTrip}
+  />
+</section>
       </div>
     </>
   );

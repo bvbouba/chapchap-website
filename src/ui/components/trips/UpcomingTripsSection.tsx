@@ -1,0 +1,85 @@
+"use client";
+
+import dayjs from "dayjs";
+import "dayjs/locale/fr"; // ✅ import French locale
+import { useState } from "react";
+import { useTripSearch } from "@/context/TripSearchContext";
+
+interface UpcomingTripsSectionProps {
+  originName: string;
+  destinationName: string;
+  initialDate: string;
+}
+
+export default function UpcomingTripsSection({
+  originName,
+  destinationName,
+  initialDate,
+}: UpcomingTripsSectionProps) {
+  dayjs.locale("fr"); // ✅ set locale globally
+
+  const today = dayjs();
+  const [currentDate, setCurrentDate] = useState(
+    dayjs(initialDate).isBefore(today, "day") ? today : dayjs(initialDate)
+  );
+  const { data, setData } = useTripSearch();
+
+  const handleDateChange = (daysToAdd: number) => {
+    const newDate = currentDate.add(daysToAdd, "day");
+    if (newDate.isBefore(today, "day")) return; // 🚫 block past dates
+    setCurrentDate(newDate);
+    if (data) {
+      setData({ ...data, date: newDate.format("YYYY-MM-DD") });
+    }
+  };
+
+  // ✅ Only show today + next 6 days (no past)
+  const getNextDays = () => Array.from({ length: 7 }, (_, i) => today.add(i, "day"));
+
+  const upcomingDays = getNextDays();
+
+  return (
+    <div className="w-full max-w-6xl mx-auto mt-6 px-4">
+      <h2 className="text-lg font-semibold text-gray-800 mb-3 text-center">
+        Horaires des bus {originName} → {destinationName}
+      </h2>
+
+      <div className="flex items-center justify-between border rounded-lg p-3 bg-gray-50">
+        <button
+          onClick={() => handleDateChange(-1)}
+          disabled={currentDate.isSame(today, "day")}
+          className="text-sm font-medium text-gray-600 hover:text-primary disabled:text-gray-400 disabled:cursor-not-allowed"
+        >
+          ← Jour précédent
+        </button>
+
+        <div className="flex gap-4 overflow-x-auto">
+          {upcomingDays.map((d) => {
+            const isSelected = d.isSame(currentDate, "day");
+            return (
+              <button
+                key={d.format("YYYY-MM-DD")}
+                onClick={() => handleDateChange(d.diff(currentDate, "day"))}
+                className={`px-3 py-1 rounded-md text-sm min-w-[60px] ${
+                  isSelected
+                    ? "bg-[#97D700] text-white"
+                    : "bg-white text-gray-700 hover:bg-gray-100"
+                }`}
+              >
+                <div className="font-medium capitalize">{d.format("ddd")}</div>
+                <div className="text-xs text-gray-500">{d.format("D MMM")}</div>
+              </button>
+            );
+          })}
+        </div>
+
+        <button
+          onClick={() => handleDateChange(1)}
+          className="text-sm font-medium text-gray-600 hover:text-primary"
+        >
+          Jour suivant →
+        </button>
+      </div>
+    </div>
+  );
+}

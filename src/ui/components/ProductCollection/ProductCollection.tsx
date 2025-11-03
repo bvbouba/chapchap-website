@@ -10,7 +10,6 @@ import {
 import { ProductList } from "../ProductList";
 import SortingDropdown from "../productList/FilteredProductList/SortingDropdown";
 import { UrlSorting } from "../productList/FilteredProductList/sorting";
-import { Pagination } from "./Pagination";
 import { mapEdgesToItems } from "@/lib/maps";
 import { TopPaginationInfo } from "../Pagination/TopPaginationInfo";
 import { BottomPagination } from "../Pagination/BottomPagination";
@@ -29,6 +28,7 @@ export interface ProductCollectionProps {
   date: string;
   optionToggle: (field?: ProductVariantSortField, direction?: OrderDirection) => void;
   chosen: UrlSorting | null;
+  displayUpcomingTrip?:boolean
 } 
   
 
@@ -43,12 +43,12 @@ export function ProductCollection({
   destinationSlug,
   date,
   optionToggle,
-  chosen
+  chosen,
+  displayUpcomingTrip=false,
 }: ProductCollectionProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<ProductVariantCollectionQuery | null>(null);
-  const [afterCursor, setAfterCursor] = useState<string | null>(null);
 
   async function fetchProducts(cursor?: string) {
     try {
@@ -124,18 +124,9 @@ export function ProductCollection({
     const nextCursor = data?.productVariants?.pageInfo.endCursor || null;
    
     if(nextCursor) {
-      setAfterCursor(nextCursor);
       fetchProducts(nextCursor);
     }
   };
-
-  if (loading) {
-    return (
-      <div className="fixed inset-0 flex items-center justify-center bg-white/70 z-50">
-        <div className="w-16 h-16 border-4 border-gray-300 border-t-[#97D700] rounded-full animate-spin"></div>
-      </div>
-    );
-  }
 
   if (error) {
     return (
@@ -144,40 +135,42 @@ export function ProductCollection({
       </div>
     );
   }
-
+  
   const variants = mapEdgesToItems(data?.productVariants);
-
-  if (!variants.length) {
-    return (
-      <div className="mx-auto max-w-7xl p-8 text-center text-gray-500">
-        Aucun voyage trouvé pour cette recherche.
-      </div>
-    );
-  }
-
+  
   return (
-    <>
-     <div className="md:w-3/4 w-full space-y-4">
-          <div className="flex justify-between items-center">
-          <SortingDropdown
-              optionToggle={optionToggle}
-              chosen={chosen}
-            />
-             <TopPaginationInfo
+    <div className="relative md:w-3/4 w-full space-y-4">
+      {/* 🔄 Overlay loader instead of replacing UI */}
+      {loading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-white/60 z-20">
+          <div className="w-16 h-16 border-4 border-gray-300 border-t-[#97D700] rounded-full animate-spin"></div>
+        </div>
+      )}
+  
+      {/* Content remains visible behind loader */}
+      {(variants.length && !displayUpcomingTrip) ? <div className="flex justify-between items-center">
+        <SortingDropdown optionToggle={optionToggle} chosen={chosen} />
+        <TopPaginationInfo
           itemsCount={variants.length}
           totalCount={data?.productVariants?.totalCount || 0}
         />
-            </div>
-      <ProductList variants={variants} />
+      </div> : <></>}
+  
+      {variants.length ? (
+        <ProductList variants={variants} />
+      ) : (
+        !loading && <div className="p-8 text-center text-gray-500">
+          Aucun voyage trouvé pour cette destination.
+        </div>
+      )}
+  
       {allowMore && data?.productVariants?.pageInfo?.hasNextPage && (
         <BottomPagination
           onLoadMore={onLoadMore}
           pageInfo={data.productVariants.pageInfo}
         />
       )}
-      </div>
-     
-    </>
+    </div>
   );
 }
 

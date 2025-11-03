@@ -2,13 +2,14 @@
 
 import { TripSearchData, useTripSearch } from "@/context/TripSearchContext";
 import TripSearchForm, { FormValues } from "./form";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, usePathname } from "next/navigation";
 
 export default function SimpleHeroSearch({ data }: { data?: TripSearchData }) {
   const { setData } = useTripSearch();
-  const router = useRouter();
   const params = useParams<{ channel: string }>();
-  
+  const pathname = usePathname(); // ✅ Get current URL path
+  console.log(pathname)
+
   const handleSearchSubmit = (values: FormValues & { tripType: "oneway" | "roundtrip" }) => {
     // ✅ Map form values to TripSearchData
     const tripData: TripSearchData = {
@@ -29,17 +30,19 @@ export default function SimpleHeroSearch({ data }: { data?: TripSearchData }) {
 
     // ✅ Update context
     setData(tripData);
+    
+    // 🚫 If the current URL includes "categories", don't modify it
+    if (pathname.includes("categories")) {
+      return;
+    }
 
-    // ✅ Update the URL dynamically
+    // ✅ Otherwise, update the URL dynamically
     const formattedDate = tripData.date
-      ? new Date(tripData.date).toISOString().split("T")[0] // YYYY-MM-DD
+      ? new Date(tripData.date).toISOString().split("T")[0]
       : "";
 
-    // Example: /originSlug/destinationSlug/2025-11-12
     const newUrl = `/${params.channel}/depart/${tripData.origin.id}/${tripData.destination.id}/${formattedDate}`;
-
     window.history.pushState(null, "", newUrl);
-
   };
 
   return (
