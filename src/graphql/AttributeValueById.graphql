@@ -3,3 +3,8 @@ query getAttributeValueById($id: ID!) {
 		...AssignedAttributeValue
 	}
 }
+fragment AssignedAttributeValue on AttributeValue {
+	name
+	id
+	slug
+}

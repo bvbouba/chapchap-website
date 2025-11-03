@@ -109,7 +109,7 @@ export function FilteredProductList({
       }
       const newFilterValues = filter.value.slug.oneOf.filter((value) => value !== choiceSlug);
       if (newFilterValues?.length) {
-        return [...result, { ...filter, values: newFilterValues }];
+        return [...result, { ...filter, value: { slug: { oneOf: newFilterValues } } }];
       }
       return result;
     }, []);
@@ -132,7 +132,7 @@ export function FilteredProductList({
     // if attribute was not used before, add it
     const existingFilter = queryFilters.find((filter) => filter.slug === attributeSlug);
     if (!existingFilter) {
-      setQueryFilters([...queryFilters, { slug: attributeSlug, value:{slug: {oneOf: [choiceSlug]} }}], {
+      setQueryFilters([...queryFilters, { slug: attributeSlug, value: { slug: { oneOf: [choiceSlug] } } }], {
         scroll: false,
         shallow: true,
       });
@@ -173,13 +173,13 @@ export function FilteredProductList({
           {/* ✅ Filters Sidebar */}
           <aside className="mb-6 flex flex-col gap-4">
             {/* Reset All Filters Button */}
-            {pills.length > 0 &&  <div className="border-b border-gray-200 mb-6">
-            <button
-              onClick={clearFilters}
-              className="py-2 text-[#97D700] px-4 rounded-md text-sm hover:text-red-600 transition"
-            >
-              Réinitialiser tous les filtres
-            </button>
+            {pills.length > 0 && <div className="border-b border-gray-200 mb-6">
+              <button
+                onClick={clearFilters}
+                className="py-2 text-[#97D700] px-4 rounded-md text-sm hover:text-red-600 transition"
+              >
+                Réinitialiser tous les filtres
+              </button>
             </div>}
             {/* Attribute Filters */}
             {attributeFiltersData.map((attribute) => (
@@ -192,12 +192,12 @@ export function FilteredProductList({
               />
             ))}
           </aside>
-         
+
           <ProductCollection
             where={productVariantsWhere}
             sortBy={sortBy || undefined}
             setCounter={setItemsCounter}
-            perPage={40}
+            perPage={2}
             originSlug={data.origin.slug}
             destinationSlug={data.destination.slug}
             date={data.date}

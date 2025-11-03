@@ -1,9 +1,8 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   OrderDirection,
-  ProductVariantCollectionQuery,
   ProductVariantSortField,
   ProductVariantWhereInput,
 } from "@/gql/graphql";
@@ -12,6 +11,10 @@ import SortingDropdown from "../productList/FilteredProductList/SortingDropdown"
 import { UrlSorting } from "../productList/FilteredProductList/sorting";
 import { Pagination } from "./Pagination";
 import { mapEdgesToItems } from "@/lib/maps";
+import { ProductVariantCollectionQueryVariables } from "../graphql";
+import { useProductVariantCollection } from "@/hooks/useProductVariantCollection";
+import { BottomPagination } from "../Pagination/BottomPagination";
+import { TopPaginationInfo } from "../Pagination/TopPaginationInfo";
 
 export interface ProductCollectionProps {
   where?: ProductVariantWhereInput;
@@ -43,89 +46,45 @@ export function ProductCollection({
   optionToggle,
   chosen
 }: ProductCollectionProps) {
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [data, setData] = useState<ProductVariantCollectionQuery | null>(null);
-  const [afterCursor, setAfterCursor] = useState<string | null>(null);
+  const [after, setAfter] = useState<string | null>(null);
 
-  async function fetchProducts(cursor?: string) {
-    try {
-      setLoading(true);
-      setError(null);
 
-      const updatedWhere:ProductVariantWhereInput = {
-        ...where,
-        attributes: [
-          ...(where?.attributes ?? []),
-          { slug: "departure-city", value:{slug:{oneOf:[originSlug]} }},
-          { slug: "arrival-city", value:{slug: {oneOf:[destinationSlug]}} },
-          { slug: "departure-time", value: { dateTime: {
-            gte: `${date}T00:00:00`,
-            lte: `${date}T23:59:59`,
-            } } },
-        ],
-      };
+  const variables = useMemo<ProductVariantCollectionQueryVariables>(() => ({
+    where: {
+      ...where,
+      attributes: [
+        ...(where?.attributes ?? []),
+        { slug: "departure-city", value: { slug: { oneOf: [originSlug] } } },
+        { slug: "arrival-city", value: { slug: { oneOf: [destinationSlug] } } },
+        { slug: "departure-time", value: { dateTime: {
+          gte: `${date}T00:00:00`,
+          lte: `${date}T23:59:59`,
+        } } },
+      ],
+    },
+    first: perPage,
+    channel: "ci",
+    after,
+    ...(sortBy?.field && sortBy?.direction && {
+      sortBy: { field: sortBy.field, direction: sortBy.direction },
+    }),
+  }), [where, sortBy, originSlug, destinationSlug, date, after, perPage]);
 
-      const res = await fetch("/api/product-collection", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          where: updatedWhere,
-          sortBy,
-          perPage,
-          after: cursor,
-          channel:"ci"
-        }),
-      });
-
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-      const result = (await res.json()) as ProductVariantCollectionQuery;
-      const productVariants = result.productVariants
-      setData(result)
-
-      if (cursor && data && productVariants) {
-        setData({
-          ...result,
-          productVariants: {
-            ...productVariants,
-            edges: [
-              ...(data.productVariants?.edges ?? []),
-              ...(result.productVariants?.edges ?? []),
-            ],
-          },
-        });
-      } else {
-        setData(result);
+  
+  const {productVariants,loading,refetch,error} = useProductVariantCollection({variables})
+    
+    useEffect(() => {
+      if (setCounter) {
+        setCounter(productVariants?.totalCount || 0);
       }
+    }, [setCounter, productVariants?.totalCount]);
+  
+    const onLoadMore = () => {
+      if (!productVariants?.pageInfo.endCursor) return;
+      setAfter(productVariants.pageInfo.endCursor);
+      refetch({ requestPolicy: "network-only" });
+    };
 
-    } catch (err) {
-      console.error("Erreur:", err);
-      setError("Impossible de charger les produits.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    fetchProducts();
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [where, sortBy,originSlug, destinationSlug, date]);
-
-  useEffect(() => {
-    if (setCounter) {
-      setCounter(data?.productVariants?.totalCount || 0);
-    }
-  }, [data?.productVariants?.totalCount]);
-
-  const onLoadMore = () => {
-    const nextCursor = data?.productVariants?.pageInfo.endCursor || null;
-   
-    if(nextCursor) {
-      setAfterCursor(nextCursor);
-      fetchProducts(nextCursor);
-    }
-  };
 
   if (loading) {
     return (
@@ -138,12 +97,12 @@ export function ProductCollection({
   if (error) {
     return (
       <div className="mx-auto max-w-7xl p-8 text-center text-red-500">
-        {error}
+        {error.message}
       </div>
     );
   }
 
-  const variants = mapEdgesToItems(data?.productVariants);
+  const variants = mapEdgesToItems(productVariants);
 
   if (!variants.length) {
     return (
@@ -152,28 +111,26 @@ export function ProductCollection({
       </div>
     );
   }
-
+  
   return (
-    <>
-     <div className="md:w-3/4 w-full space-y-4">
-          <div>
-          <SortingDropdown
-              optionToggle={optionToggle}
-              chosen={chosen}
-            />
-             {allowMore && data?.productVariants?.pageInfo?.hasNextPage && (
-        <Pagination
-          onLoadMore={onLoadMore}
-          pageInfo={data.productVariants.pageInfo}
-          itemsCount={data.productVariants.edges.length}
-          totalCount={data.productVariants.totalCount || undefined}
+    <div className="md:w-3/4 w-full space-y-4">
+      <div className="flex justify-between items-center">
+        <SortingDropdown optionToggle={optionToggle} chosen={chosen} />
+        <TopPaginationInfo
+          itemsCount={variants.length}
+          totalCount={productVariants?.totalCount || 0}
         />
-      )} 
-            </div>
-      <ProductList variants={variants} />
       </div>
-     
-    </>
+
+      <ProductList variants={variants} />
+
+      {allowMore && productVariants?.pageInfo?.hasNextPage && (
+        <BottomPagination
+          onLoadMore={onLoadMore}
+          pageInfo={productVariants.pageInfo}
+        />
+      )}
+    </div>
   );
 }
 

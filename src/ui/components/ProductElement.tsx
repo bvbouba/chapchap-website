@@ -1,8 +1,8 @@
 "use client";
 
-import type { ProductVariantListItemFragment } from "@/gql/graphql";
 import { formatMoney } from "@/lib/utils";
 import { ProductImageWrapper } from "../atoms/ProductImageWrapper";
+import { ProductVariantListItemFragment } from "./graphql";
 
 export function ProductElement({
 	variant,

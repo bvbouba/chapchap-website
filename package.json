@@ -12,6 +12,7 @@
 		"prebuild": "pnpm run generate",
 		"lint": "next lint --dir src --fix",
 		"generate": "graphql-codegen --config .graphqlrc.ts",
+		"generate:urql": "graphql-codegen --config codegen-urql.yml",
 		"prepare": "husky install",
 		"test": "playwright test"
 	},
@@ -49,6 +50,7 @@
 	"devDependencies": {
 		"@graphql-codegen/cli": "5.0.0",
 		"@graphql-codegen/client-preset": "4.1.0",
+		"@graphql-codegen/typescript-urql": "4.0.1",
 		"@graphql-typed-document-node/core": "3.2.0",
 		"@next/env": "^15.0.0",
 		"@parcel/watcher": "2.3.0",

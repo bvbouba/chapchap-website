@@ -1,4 +1,4 @@
-import { ProductVariantListItemFragment } from "@/gql/graphql";
+import { ProductVariantListItemFragment } from "./graphql";
 import { ProductElement } from "./ProductElement";
 
 export const ProductList = ({ variants }: { variants: readonly ProductVariantListItemFragment[] }) => {

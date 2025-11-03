@@ -1,9 +1,3 @@
-fragment AssignedAttributeValue on AttributeValue {
-	name
-	id
-	slug
-}
-
 query getAttributeBySlug($slug: String!) {
 	attribute(slug: $slug) {
 		choices(first: 50) {
