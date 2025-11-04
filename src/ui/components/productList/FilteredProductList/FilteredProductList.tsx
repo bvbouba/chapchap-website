@@ -19,9 +19,9 @@ import { ProductCollection } from "../../ProductCollection";
 import { useTripSearch } from "@/context/TripSearchContext";
 import SimpleHeroSearch from "../../HeroSearch/SimpleHeroSearch";
 import TripHeader from "../../trips/TripHeader";
-import FilterElement from "./FilterElement";
 import UpcomingTripsSection from "../../trips/UpcomingTripsSection";
 import SectionFilter from "../../trips/SectionFilter";
+import dayjs from "dayjs";
 
 export interface FilteredProductListProps {
   attributeFiltersData: AttributeFilterFragment[];
@@ -29,8 +29,9 @@ export interface FilteredProductListProps {
   categoryIDs?: string[];
   originData: AssignedAttributeValueFragment | null | undefined;
   destinationData: AssignedAttributeValueFragment | null | undefined;
-  date: string;
   busOperator?: string;
+  busOperatorName?:string;
+
 }
 
 export interface Filters {
@@ -48,8 +49,9 @@ export function FilteredProductList({
   categoryIDs,
   originData,
   destinationData,
-  date,
-  busOperator
+  busOperator,
+  busOperatorName
+
 }: FilteredProductListProps) {
   const [queryFilters, setQueryFilters] = useQueryState("filters", {
     parse: parseQueryAttributeFilters,
@@ -76,11 +78,14 @@ export function FilteredProductList({
 
   const { data, setData } = useTripSearch();
 
+  const today = dayjs();
+
+
   // ✅ Initialize context when data arrives
   useEffect(() => {
     if (originData && destinationData) {
       setData({
-        tripType: "oneway",
+        tripType: data?.tripType ?? "oneway",
         origin: {
           id: originData.id ?? "",
           name: originData.name ?? "",
@@ -91,10 +96,10 @@ export function FilteredProductList({
           name: destinationData.name ?? "",
           slug: destinationData.slug ?? "",
         },
-        date,
+        date:data?.date ?? today.format("YYYY-MM-DD")  ,
       });
     }
-  }, [originData, destinationData, date, setData]);
+  }, [originData, destinationData, setData]);
 
   useEffect(() => {
     setProductVariantsWhere({
@@ -197,6 +202,7 @@ export function FilteredProductList({
           originName={data.origin.name}
           destinationName={data.destination.name}
           initialDate={data.date}
+          busOperatorName={busOperatorName}
         />
       ) : <TripHeader destinationName={data.destination.name} date={data.date} />}
       <div className="mt-4">

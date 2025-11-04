@@ -160,7 +160,7 @@ export function ProductCollection({
         <ProductList variants={variants} />
       ) : (
         !loading && <div className="p-8 text-center text-gray-500">
-          Aucun voyage trouvé pour cette destination.
+          Aucun trajet trouvé pour cette destination.
         </div>
       )}
   

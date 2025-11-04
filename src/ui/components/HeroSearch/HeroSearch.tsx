@@ -11,11 +11,7 @@ export default function HeroSearch() {
   const { data } = useTripSearch();
 
   const handleSearchSubmit = (values: FormValues & { tripType: "oneway" | "roundtrip" }) => {
-    if(values.tripType === "oneway") {
-    router.push(`/${params.channel}/depart/${values.origin.id}/${values.destination.id}/${values.date}`)
-    }else {
-      router.push(`/${params.channel}/depart/${values.origin.id}/${values.destination.id}/${values.date}/${values.returnDate}`)
-    }
+    router.push(`/${params.channel}/trips/${values.origin.id}/${values.destination.id}`)  
   };
   return (
     <section className="relative">

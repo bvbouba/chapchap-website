@@ -2,7 +2,7 @@ import { type ReactNode } from "react";
 import { Footer } from "@/ui/components/Footer";
 import { Header } from "@/ui/components/Header";
 import { TripSearchProvider } from "@/context/TripSearchContext";
-import { AuthProvider } from "@/ui/components/AuthProvider";
+import { GlobalLoadingProvider } from "@/context/GlobalLoadingContext";
 
 export const metadata = {
 	title: "Saleor Storefront example",
@@ -16,7 +16,7 @@ export default async function RootLayout(props: {
 	const channel = (await props.params).channel;
 
 	return (
-		<AuthProvider>
+		<GlobalLoadingProvider>
 		<TripSearchProvider>
 			<Header channel={channel} />
 			<div className="flex min-h-[calc(100dvh-64px)] flex-col">
@@ -24,6 +24,6 @@ export default async function RootLayout(props: {
 				<Footer channel={channel} />
 			</div>
 		</TripSearchProvider>
-		</AuthProvider>
+		</GlobalLoadingProvider>
 	);
 }

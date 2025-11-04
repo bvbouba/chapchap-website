@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { UserMenuContainer } from "./components/UserMenu/UserMenuContainer";
 import { NavLinks } from "./components/NavLinks";
 import { MobileMenu } from "./components/MobileMenu";
+import { CartNavItem } from "./components/CartNavItem";
 
 export const Nav = ({ channel }: { channel: string }) => {
 	return (
@@ -17,11 +18,11 @@ export const Nav = ({ channel }: { channel: string }) => {
 					<UserMenuContainer />
 				</Suspense>
 			</div>
-			{/* <div className="flex items-center">
+			<div className="flex items-center">
 				<Suspense fallback={<div className="w-6" />}>
 					<CartNavItem channel={channel} />
 				</Suspense>
-			</div> */}
+			</div>
 			<Suspense>
 				<MobileMenu>
 					{/* <SearchBar channel={channel} /> */}

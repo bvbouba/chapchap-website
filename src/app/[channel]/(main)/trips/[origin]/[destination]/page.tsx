@@ -14,12 +14,11 @@ import { getTransformedAttributes } from "@/lib/transformAttributes";
   interface PageParams {
 	channel: string;
 	destination: string;
-	date: string;
 	origin: string;
   }
   
   export default async function Page(props: { params: Promise<PageParams> }) {
-	const { origin, destination, date } = await props.params;
+	const { origin, destination } = await props.params;
   
 	// ✅ Fetch both origin & destination in parallel
 	const [originRes, destinationRes ] = await Promise.all([
@@ -47,7 +46,6 @@ import { getTransformedAttributes } from "@/lib/transformAttributes";
 		attributeFiltersData={attributes}
 		originData={originData}
 		destinationData={destinationData}
-		date={date}
 	  />
 	);
   }

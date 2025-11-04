@@ -59,17 +59,15 @@ export default async function Page(props: { params: Promise<{ slug: string; chan
     destinationSlug,
     channel: "ci",
   });
-
-  const date = new Date().toISOString().split("T")[0];
   
   return (
     <FilteredProductList
       attributeFiltersData={attributes}
       originData={originData}
       destinationData={destinationData}
-      date={date}
       busOperator={busOperator}
       categoryIDs={[category.id]}
+      busOperatorName={category.name}
     />
   );
 }

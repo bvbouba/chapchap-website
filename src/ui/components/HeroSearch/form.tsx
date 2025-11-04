@@ -5,7 +5,7 @@ import { useState, useEffect, useRef } from "react";
 import { MapPin, Calendar, ArrowLeftRight } from "lucide-react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
-import { TripSearchData } from "@/context/TripSearchContext";
+import { TripSearchData, useTripSearch } from "@/context/TripSearchContext";
 import {TripSearchFormSkeleton} from "./skeleton";
 
 export type FormValues = {
@@ -47,6 +47,7 @@ const [tripType, setTripType] = useState<"oneway" | "roundtrip">(initialTripType
   const originRef = useRef<HTMLDivElement>(null);
   const destinationRef = useRef<HTMLDivElement>(null);
   const today = new Date().toISOString().split("T")[0];
+  const {setData} = useTripSearch()
 
    // ✅ Load all cities
    useEffect(() => {
@@ -124,6 +125,7 @@ const [tripType, setTripType] = useState<"oneway" | "roundtrip">(initialTripType
       };
     
       if (onSubmit) {
+        setData(payload)
         onSubmit(payload);
       } else {
         console.log(payload);

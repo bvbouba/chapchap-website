@@ -31,18 +31,6 @@ export default function SimpleHeroSearch({ data }: { data?: TripSearchData }) {
     // ✅ Update context
     setData(tripData);
     
-    // 🚫 If the current URL includes "categories", don't modify it
-    if (pathname.includes("categories")) {
-      return;
-    }
-
-    // ✅ Otherwise, update the URL dynamically
-    const formattedDate = tripData.date
-      ? new Date(tripData.date).toISOString().split("T")[0]
-      : "";
-
-    const newUrl = `/${params.channel}/depart/${tripData.origin.id}/${tripData.destination.id}/${formattedDate}`;
-    window.history.pushState(null, "", newUrl);
   };
 
   return (

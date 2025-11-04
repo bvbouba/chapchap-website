@@ -9,12 +9,14 @@ interface UpcomingTripsSectionProps {
   originName: string;
   destinationName: string;
   initialDate: string;
+  busOperatorName?: string;
 }
 
 export default function UpcomingTripsSection({
   originName,
   destinationName,
   initialDate,
+  busOperatorName,
 }: UpcomingTripsSectionProps) {
   dayjs.locale("fr"); // ✅ set locale globally
 
@@ -26,22 +28,25 @@ export default function UpcomingTripsSection({
 
   const handleDateChange = (daysToAdd: number) => {
     const newDate = currentDate.add(daysToAdd, "day");
-    if (newDate.isBefore(today, "day")) return; // 🚫 block past dates
+    if (newDate.isBefore(today, "day")) return; // 🚫 prevent past dates
     setCurrentDate(newDate);
     if (data) {
       setData({ ...data, date: newDate.format("YYYY-MM-DD") });
     }
   };
 
-  // ✅ Only show today + next 6 days (no past)
-  const getNextDays = () => Array.from({ length: 7 }, (_, i) => today.add(i, "day"));
+  // ✅ Show today + next 6 days
+  const upcomingDays = Array.from({ length: 7 }, (_, i) => today.add(i, "day"));
 
-  const upcomingDays = getNextDays();
+  // ✅ Create readable title
+  const title = busOperatorName
+    ? `Horaires des bus ${busOperatorName} : ${originName} → ${destinationName}`
+    : `Horaires des bus ${originName} → ${destinationName}`;
 
   return (
     <div className="w-full max-w-6xl mx-auto mt-6 px-4">
       <h2 className="text-lg font-semibold text-gray-800 mb-3 text-center">
-        Horaires des bus {originName} → {destinationName}
+        {title}
       </h2>
 
       <div className="flex items-center justify-between border rounded-lg p-3 bg-gray-50">
@@ -60,11 +65,12 @@ export default function UpcomingTripsSection({
               <button
                 key={d.format("YYYY-MM-DD")}
                 onClick={() => handleDateChange(d.diff(currentDate, "day"))}
-                className={`px-3 py-1 rounded-md text-sm min-w-[60px] ${
+                disabled={d.isBefore(today, "day")}
+                className={`px-3 py-1 rounded-md text-sm min-w-[60px] transition ${
                   isSelected
                     ? "bg-[#97D700] text-white"
                     : "bg-white text-gray-700 hover:bg-gray-100"
-                }`}
+                } ${d.isBefore(today, "day") ? "opacity-50 cursor-not-allowed" : ""}`}
               >
                 <div className="font-medium capitalize">{d.format("ddd")}</div>
                 <div className="text-xs text-gray-500">{d.format("D MMM")}</div>

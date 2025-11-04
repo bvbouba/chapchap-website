@@ -1,43 +1,73 @@
 import { notFound } from "next/navigation";
 import { type ResolvingMetadata, type Metadata } from "next";
-import { ProductListByCollectionDocument } from "@/gql/graphql";
+import { CategoryBySlugDocument, CollectionBySlugDocument, GetAttributeValueBySlugDocument, ProductListByCollectionDocument } from "@/gql/graphql";
 import { executeGraphQL } from "@/lib/graphql";
-import { ProductList } from "@/ui/components/ProductList";
+import { getTransformedAttributes } from "@/lib/transformAttributes";
+import FilteredProductList from "@/ui/components/productList/FilteredProductList";
 
 export const generateMetadata = async (
-	props: { params: Promise<{ slug: string; channel: string }> },
-	parent: ResolvingMetadata,
+  props: { params: Promise<{ slug: string; channel: string }> },
+  parent: ResolvingMetadata
 ): Promise<Metadata> => {
-	const params = await props.params;
-	const { collection } = await executeGraphQL(ProductListByCollectionDocument, {
-		variables: { slug: params.slug, channel: params.channel },
-		revalidate: 60,
-	});
+  const params = await props.params;
+  const { collection } = await executeGraphQL(CollectionBySlugDocument, {
+    variables: { slug: params.slug, channel: params.channel },
+    revalidate: 60,
+  });
 
-	return {
-		title: `${collection?.name || "Collection"} | ${collection?.seoTitle || (await parent).title?.absolute}`,
-		description:
-			collection?.seoDescription || collection?.description || collection?.seoTitle || collection?.name,
-	};
+  return {
+    title: `${collection?.name || (await parent).title?.absolute}`,
+    description: collection?.name,
+  };
 };
 
 export default async function Page(props: { params: Promise<{ slug: string; channel: string }> }) {
-	const params = await props.params;
-	const { collection } = await executeGraphQL(ProductListByCollectionDocument, {
-		variables: { slug: params.slug, channel: params.channel },
+  const params = await props.params;
+  const { collection } = await executeGraphQL(CollectionBySlugDocument, {
+    variables: { slug: params.slug, channel: params.channel },
+    revalidate: 60,
+  });
+
+  if (!collection) {
+    notFound();
+  }
+
+  const metadata = collection.metadata || [];
+  const origin = metadata.find((m) => m.key === "origin")?.value;
+  const destination = metadata.find((m) => m.key === "destination")?.value;
+  const busOperator = metadata.find((m) => m.key === "bus-operator")?.value;
+  const originSlug = origin || "abidjan"
+  const destinationSlug = destination || "yamoussoukro"
+
+  // ✅ Fetch both origin & destination in parallel
+	const [originRes, destinationRes ] = await Promise.all([
+	  executeGraphQL(GetAttributeValueBySlugDocument, {
+		variables: { slug: originSlug},
 		revalidate: 60,
-	});
+	  }),
+	  executeGraphQL(GetAttributeValueBySlugDocument, {
+		variables: { slug: destinationSlug},
+		revalidate: 60,
+	  })
+	]);
+  
+	const originData = originRes.attributeValue;
+	const destinationData = destinationRes.attributeValue;
 
-	if (!collection || !collection.products) {
-		notFound();
-	}
-
-	const { name, products } = collection;
-
-	return (
-		<div className="mx-auto max-w-7xl p-8 pb-16">
-			<h1 className="pb-8 text-xl font-semibold">{name}</h1>
-			<ProductList products={products.edges.map((e) => e.node)} />
-		</div>
-	);
+  const { attributes } = await getTransformedAttributes({
+    originSlug,
+    destinationSlug,
+    channel: "ci",
+  });
+  
+  return (
+    <FilteredProductList
+      attributeFiltersData={attributes}
+      originData={originData}
+      destinationData={destinationData}
+      busOperator={busOperator}
+      collectionIDs={[collection.id]}
+      busOperatorName={collection.name}
+    />
+  );
 }

@@ -33,6 +33,7 @@ query ProductVariantCollection(
 fragment ProductVariantListItem on ProductVariant {
 	id
 	name
+	quantityAvailable
 	product {
 		id
 		name
