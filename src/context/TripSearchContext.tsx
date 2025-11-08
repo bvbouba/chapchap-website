@@ -15,6 +15,11 @@ export interface TripSearchData {
   destination: CityValue;
   date: string;
   returnDate?: string;
+  query?:{
+    origin:string,
+    destination:string,
+    date:string
+  }
 }
 
 // Context definition

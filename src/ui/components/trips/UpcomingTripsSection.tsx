@@ -31,7 +31,13 @@ export default function UpcomingTripsSection({
     if (newDate.isBefore(today, "day")) return; // 🚫 prevent past dates
     setCurrentDate(newDate);
     if (data) {
-      setData({ ...data, date: newDate.format("YYYY-MM-DD") });
+      setData({ ...data, 
+        date: newDate.format("YYYY-MM-DD"),
+        query: {
+          origin:data.origin.slug ?? "",
+          destination:data.destination.slug ?? "",
+          date: newDate.format("YYYY-MM-DD"),
+        } });
     }
   };
 

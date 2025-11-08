@@ -28,13 +28,16 @@ export async function addToCartAction({
 
   if (!variantId) return;
 
-  await executeGraphQL(CheckoutAddLineDocument, {
+  const {checkoutLinesAdd} = await executeGraphQL(CheckoutAddLineDocument, {
     variables: {
       id: checkout.id,
       productVariantId: decodeURIComponent(variantId),
     },
     cache: "no-cache",
   });
-
   revalidatePath("/cart");
+  return {
+    checkout:checkoutLinesAdd?.checkout,
+    errors:checkoutLinesAdd?.errors
+  }
 }

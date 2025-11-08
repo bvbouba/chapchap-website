@@ -125,7 +125,13 @@ const [tripType, setTripType] = useState<"oneway" | "roundtrip">(initialTripType
       };
     
       if (onSubmit) {
-        setData(payload)
+        setData({...payload,
+          query:{
+            origin:values.origin,
+            destination:values.destination,
+            date:values.date
+          }
+        })
         onSubmit(payload);
       } else {
         console.log(payload);

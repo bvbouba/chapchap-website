@@ -29,7 +29,14 @@ export default function SimpleHeroSearch({ data }: { data?: TripSearchData }) {
     };
 
     // ✅ Update context
-    setData(tripData);
+    setData({
+      ...tripData,
+      query:{
+        origin:values.origin.slug,
+        destination:values.destination.slug,
+        date:values.date
+      }
+    });
     
   };
 

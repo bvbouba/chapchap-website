@@ -7,6 +7,7 @@ import { ProductVariantListItemFragment } from "@/gql/graphql";
 import { addToCartAction } from "@/actions/addToCart";
 import { useParams, useRouter } from "next/navigation";
 import { useGlobalLoading } from "@/context/GlobalLoadingContext";
+import { useTripSearch } from "@/context/TripSearchContext";
 
 export function ProductElement({
 	variant,
@@ -20,15 +21,29 @@ export function ProductElement({
 	const params = useParams<{ channel: string }>();
 	const router = useRouter();
     const { setLoading } = useGlobalLoading();
+	const {setData,data}=useTripSearch()
 	
 	const handleAddToCart = async () => {
 		try {
 			setLoading(true);
-			await addToCartAction({
+			const res = await addToCartAction({
 				channel: params.channel,
 				variantId: variant.id,
 			});
+			if (data?.tripType === "oneway") {
 			router.push(`/${params.channel}/cart`);
+			 } else if (data?.tripType === "roundtrip" && res?.checkout?.lines.length === 1){
+				setData({
+					...data,
+					query:{
+						origin:data.destination.slug,
+						destination:data.origin.slug,
+						date:data.returnDate ?? ""
+					}
+				})
+			 }else if (data?.tripType === "roundtrip" && res?.checkout?.lines.length === 2){
+				router.push(`/${params.channel}/cart`);
+			 }
 		} catch (error) {
 			console.error("Erreur lors de l’ajout au panier :", error);
 		} finally {

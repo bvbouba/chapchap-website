@@ -97,6 +97,11 @@ export function FilteredProductList({
           slug: destinationData.slug ?? "",
         },
         date:data?.date ?? today.format("YYYY-MM-DD")  ,
+        query:{
+          origin:originData.slug ?? "",
+          destination:destinationData.slug ?? "",
+          date:data?.date ?? today.format("YYYY-MM-DD")
+        }
       });
     }
   }, [originData, destinationData, setData]);
@@ -224,9 +229,9 @@ export function FilteredProductList({
     sortBy={sortBy || undefined}
     setCounter={setItemsCounter}
     perPage={2}
-    originSlug={data.origin.slug}
-    destinationSlug={data.destination.slug}
-    date={data.date}
+    originSlug={data.query?.origin ?? "abidjan"}
+    destinationSlug={data.query?.destination ?? "yamoussoukro"}
+    date={data.query?.date ?? ""}
     optionToggle={(field?: ProductVariantSortField, direction?: OrderDirection) => {
       setSortBy(field && direction ? { field, direction } : null);
     }}
