@@ -8,6 +8,7 @@ import { addToCartAction } from "@/actions/addToCart";
 import { useParams, useRouter } from "next/navigation";
 import { useGlobalLoading } from "@/context/GlobalLoadingContext";
 import { useTripSearch } from "@/context/TripSearchContext";
+import { useProgress } from "@/context/ProgressContext";
 
 export function ProductElement({
 	variant,
@@ -22,7 +23,8 @@ export function ProductElement({
 	const router = useRouter();
     const { setLoading } = useGlobalLoading();
 	const {setData,data}=useTripSearch()
-	
+	const { setStep } = useProgress();
+
 	const handleAddToCart = async () => {
 		try {
 			setLoading(true);
@@ -31,6 +33,7 @@ export function ProductElement({
 				variantId: variant.id,
 			});
 			if (data?.tripType === "oneway") {
+			setStep("summary")
 			router.push(`/${params.channel}/cart`);
 			 } else if (data?.tripType === "roundtrip" && res?.checkout?.lines.length === 1){
 				setData({
@@ -41,7 +44,9 @@ export function ProductElement({
 						date:data.returnDate ?? ""
 					}
 				})
+				setStep("return")
 			 }else if (data?.tripType === "roundtrip" && res?.checkout?.lines.length === 2){
+				setStep("summary")
 				router.push(`/${params.channel}/cart`);
 			 }
 		} catch (error) {
@@ -139,7 +144,7 @@ export function ProductElement({
 								className="w-[70px] h-[20px]"
 							/>
 						)}
-						<span className="text-gray-700 text-sm font-medium">
+						<span className="text-gray-700 text-sm  ">
 							{company ?? "Compagnie inconnue"}
 						</span>
 					</div>
@@ -147,7 +152,7 @@ export function ProductElement({
 					{/* Times */}
 					<div className="flex items-center gap-6">
 						<div className="text-center">
-							<div className="text-lg font-semibold text-[#97D700]">
+							<div className="text-lg text-primary">
 								{departureTimeStr}
 							</div>
 							<div className="text-xs text-gray-600 mt-1">
@@ -156,7 +161,7 @@ export function ProductElement({
 						</div>
 
 						<div className="flex flex-col items-center text-gray-400">
-							<div className="text-lg font-semibold">→</div>
+							<div className="text-lg ">→</div>
 							{readableDuration && (
 								<div className="text-xs text-gray-500 mt-1">
 									{readableDuration}
@@ -165,7 +170,7 @@ export function ProductElement({
 						</div>
 
 						<div className="text-center">
-							<div className="text-lg font-semibold text-[#97D700]">
+							<div className="text-lg text-primary">
 								{arrivalTimeStr ?? "— —"}
 							</div>
 							<div className="text-xs text-gray-600 mt-1">
@@ -177,7 +182,7 @@ export function ProductElement({
 
 				{/* RIGHT SIDE: price & action */}
 				<div className="text-right mt-4 md:mt-0">
-					<div className="text-xl font-bold text-[#d13b3b]">
+					<div className="text-xl text-[#d13b3b]">
 						{formatMoney(
 							variant?.pricing?.price?.gross.amount ?? 0,
 							variant?.pricing?.price?.gross.currency ?? ""

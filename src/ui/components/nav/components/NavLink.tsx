@@ -15,7 +15,7 @@ export function NavLink({ href, children }: { href: string; children: ReactEleme
 				href={href}
 				className={clsx(
 					isActive ? "border-neutral-900 text-neutral-900" : "border-transparent text-neutral-500",
-					"inline-flex items-center border-b-2 pt-px text-sm font-medium hover:text-primary",
+					"inline-flex items-center border-b-2 pt-px text-sm   hover:text-primary",
 				)}
 			>
 				{children}

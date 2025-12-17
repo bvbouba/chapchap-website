@@ -139,11 +139,11 @@ export function ProductCollection({
   const variants = mapEdgesToItems(data?.productVariants);
   
   return (
-    <div className="relative md:w-3/4 w-full space-y-4">
+    <div className="w-3/4 md:w-3/4 relative space-y-4">
       {/* 🔄 Overlay loader instead of replacing UI */}
       {loading && (
         <div className="absolute inset-0 flex items-center justify-center bg-white/60 z-20">
-          <div className="w-16 h-16 border-4 border-gray-300 border-t-[#97D700] rounded-full animate-spin"></div>
+          <div className="w-16 h-16 border-4 border-gray-300 border-t-primary rounded-full animate-spin"></div>
         </div>
       )}
   

@@ -21,9 +21,9 @@ export default function TripHeader({ destinationName, date }: TripHeaderProps) {
         {/* Partie gauche */}
         <div className="text-gray-800">
           Départ vers{" "}
-          <span className="font-semibold text-[#97D700]">{destinationName}</span>{" "}
+          <span className="text-primary">{destinationName}</span>{" "}
           le{" "}
-          <span className="text-[#97D700]">{formattedDate}</span>
+          <span className="text-primary">{formattedDate}</span>
         </div>
 
         {/* Partie droite */}
@@ -31,7 +31,7 @@ export default function TripHeader({ destinationName, date }: TripHeaderProps) {
           <ChevronRight className="w-4 h-4 text-gray-400" />
           <span className="mx-1 text-gray-700">Résumé du voyage</span>
           <ChevronRight className="w-4 h-4 text-gray-400" />
-          <span className="ml-1 font-semibold text-gray-700">Paiement</span>
+          <span className="ml-1 text-gray-700">Paiement</span>
         </div>
       </div>
     </div>

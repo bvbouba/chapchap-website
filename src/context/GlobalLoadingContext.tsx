@@ -27,7 +27,7 @@ export function GlobalLoadingProvider({ children }: GlobalLoadingProviderProps) 
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
           <div className="bg-white rounded-xl shadow-lg px-6 py-4 flex flex-col items-center">
             <svg
-              className="animate-spin h-8 w-8 text-[#97D700] mb-3"
+              className="animate-spin h-8 w-8 text-primary mb-3"
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
               viewBox="0 0 24 24"
@@ -48,7 +48,7 @@ export function GlobalLoadingProvider({ children }: GlobalLoadingProviderProps) 
                    3.042 1.135 5.824 3 7.938l3-2.647z"
               />
             </svg>
-            <p className="text-gray-800 font-medium text-sm">
+            <p className="text-gray-800 text-sm">
               Connexion avec notre partenaire…
             </p>
           </div>

@@ -51,7 +51,7 @@ export const DeliveryMethods: React.FC<CommonSectionProps> = ({ collapsed }) => 
 											<p>{name}</p>
 											<p>{getFormattedMoney(price)}</p>
 										</div>
-										<p className="font-xs" color="secondary">
+										<p className="" color="secondary">
 											{getSubtitle({ min, max })}
 										</p>
 									</div>

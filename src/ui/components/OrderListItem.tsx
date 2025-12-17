@@ -14,17 +14,17 @@ export const OrderListItem = ({ order }: Props) => {
 			<div className="flex flex-col gap-2 border bg-neutral-200/20 px-6 py-4 md:grid md:grid-cols-4 md:gap-8">
 				<dl className="flex flex-col divide-y divide-neutral-200 text-sm md:col-span-3 md:grid md:grid-cols-3 md:gap-6 md:divide-none lg:col-span-2">
 					<div className="flex flex-row items-center justify-between py-4 md:flex-col md:items-start md:gap-y-1">
-						<dt className="font-medium text-neutral-900">Order number</dt>
+						<dt className="text-neutral-900">Order number</dt>
 						<dd className="text-neutral-600">{order.number}</dd>
 					</div>
 					<div className="flex flex-row items-center justify-between py-4 md:flex-col md:items-start md:gap-y-1">
-						<dt className="font-medium text-neutral-900">Date placed</dt>
+						<dt className="text-neutral-900">Date placed</dt>
 						<dd className="text-neutral-600">
 							<time dateTime={order.created}>{formatDate(new Date(order.created))}</time>
 						</dd>
 					</div>
 					<div className="flex flex-row items-center justify-between py-4 md:flex-col md:items-start md:gap-y-1">
-						<dt className="font-medium text-neutral-900">Payment status</dt>
+						<dt className="  text-neutral-900">Payment status</dt>
 						<dd>
 							<PaymentStatus status={order.paymentStatus} />
 						</dd>
@@ -81,7 +81,7 @@ export const OrderListItem = ({ order }: Props) => {
 																productSlug: product.slug,
 																variantId: item.variant.id,
 															})}
-															className="font-medium text-neutral-900"
+															className="  text-neutral-900"
 														>
 															{product.name}
 														</LinkWithChannel>
@@ -124,7 +124,7 @@ export const OrderListItem = ({ order }: Props) => {
 							</tbody>
 						</table>
 					</div>
-					<dl className="flex justify-between border-y py-6 text-sm font-medium text-neutral-900 md:border md:px-6">
+					<dl className="flex justify-between border-y py-6 text-sm   text-neutral-900 md:border md:px-6">
 						<dt>Total amount including delivery</dt>
 						<dd>{formatMoney(order.total.gross.amount, order.total.gross.currency)}</dd>
 					</dl>

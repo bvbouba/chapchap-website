@@ -1,5 +1,4 @@
-query CheckoutFind($id: ID!) {
-	checkout(id: $id) {
+fragment Checkout on Checkout {
 		id
 		email
 		lines {
@@ -34,6 +33,18 @@ query CheckoutFind($id: ID!) {
 				}
 				name
 				id
+			attributes {
+			attribute {
+				name
+				slug
+				inputType
+			}
+			values {
+				name
+				slug
+				value
+			}
+		}
 			}
 		}
 		totalPrice {
@@ -42,5 +53,10 @@ query CheckoutFind($id: ID!) {
 				currency
 			}
 		}
+}
+
+query CheckoutFind($id: ID!) {
+	checkout(id: $id) {
+		...Checkout
 	}
 }

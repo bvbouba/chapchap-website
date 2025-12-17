@@ -91,14 +91,14 @@ export const NavLinks = async ({ channel }: { channel: string }) => {
 								href={href}
 								target="_blank"
 								rel="noopener noreferrer"
-								className="font-medium text-gray-800 hover:text-primary"
+								className="  text-gray-800 hover:text-primary"
 							>
 								{item.name}
 							</a>
 						);
 					}
 					return (
-						<Link key={item.id} href={href} className="font-medium text-gray-800 hover:text-primary">
+						<Link key={item.id} href={href} className="  text-gray-800 hover:text-primary">
 							{item.name}
 						</Link>
 					);

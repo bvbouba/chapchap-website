@@ -6,7 +6,6 @@ import { useEffect, useState } from "react";
 
 
 import {
-  getFilterOptions,
   getPillsData,
   parseQueryAttributeFilters,
   serializeQueryAttributeFilters,
@@ -22,6 +21,7 @@ import TripHeader from "../../trips/TripHeader";
 import UpcomingTripsSection from "../../trips/UpcomingTripsSection";
 import SectionFilter from "../../trips/SectionFilter";
 import dayjs from "dayjs";
+import ProgressHeader from "../../ProgressHeader";
 
 export interface FilteredProductListProps {
   attributeFiltersData: AttributeFilterFragment[];
@@ -59,7 +59,7 @@ export function FilteredProductList({
     defaultValue: [],
   });
 
-  const [itemsCounter, setItemsCounter] = useState(0);
+  const [, setItemsCounter] = useState(0);
 
   const [sortByQuery, setSortByQuery] = useQueryState("sortBy", {});
 
@@ -209,10 +209,10 @@ export function FilteredProductList({
           initialDate={data.date}
           busOperatorName={busOperatorName}
         />
-      ) : <TripHeader destinationName={data.destination.name} date={data.date} />}
+      ) : <ProgressHeader destinationName={data.destination.name} date={data.date} />}
       <div className="mt-4">
       <section
-  className={`flex w-full max-w-6xl mx-auto py-8 px-4 gap-6 
+  className={`flex w-full max-w-6xl mx-auto py-8 px-8 gap-6 
     ${!displayUpcomingTrip ? "flex-col md:flex-row" : "justify-center"}`}
 >
   {!displayUpcomingTrip && (

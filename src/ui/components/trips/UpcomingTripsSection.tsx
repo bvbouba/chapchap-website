@@ -51,7 +51,7 @@ export default function UpcomingTripsSection({
 
   return (
     <div className="w-full max-w-6xl mx-auto mt-6 px-4">
-      <h2 className="text-lg font-semibold text-gray-800 mb-3 text-center">
+      <h2 className="text-lg text-gray-800 mb-3 text-center">
         {title}
       </h2>
 
@@ -59,7 +59,7 @@ export default function UpcomingTripsSection({
         <button
           onClick={() => handleDateChange(-1)}
           disabled={currentDate.isSame(today, "day")}
-          className="text-sm font-medium text-gray-600 hover:text-primary disabled:text-gray-400 disabled:cursor-not-allowed"
+          className="text-sm   text-gray-600 hover:text-primary disabled:text-gray-400 disabled:cursor-not-allowed"
         >
           ← Jour précédent
         </button>
@@ -74,11 +74,11 @@ export default function UpcomingTripsSection({
                 disabled={d.isBefore(today, "day")}
                 className={`px-3 py-1 rounded-md text-sm min-w-[60px] transition ${
                   isSelected
-                    ? "bg-[#97D700] text-white"
+                    ? "bg-primary text-white"
                     : "bg-white text-gray-700 hover:bg-gray-100"
                 } ${d.isBefore(today, "day") ? "opacity-50 cursor-not-allowed" : ""}`}
               >
-                <div className="font-medium capitalize">{d.format("ddd")}</div>
+                <div className="  capitalize">{d.format("ddd")}</div>
                 <div className="text-xs text-gray-500">{d.format("D MMM")}</div>
               </button>
             );
@@ -87,7 +87,7 @@ export default function UpcomingTripsSection({
 
         <button
           onClick={() => handleDateChange(1)}
-          className="text-sm font-medium text-gray-600 hover:text-primary"
+          className="text-sm   text-gray-600 hover:text-primary"
         >
           Jour suivant →
         </button>

@@ -37,7 +37,7 @@ export default async function Page(props: { params: Promise<{ slug: string }> })
 
 	return (
 		<div className="mx-auto max-w-7xl p-8 pb-16">
-			<h1 className="text-3xl font-semibold">{title}</h1>
+			<h1 className="text-3xl ">{title}</h1>
 			{contentHtml && (
 				<div className="prose">
 					{contentHtml.map((content) => (

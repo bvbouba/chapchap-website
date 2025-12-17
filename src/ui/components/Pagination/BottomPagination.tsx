@@ -11,7 +11,7 @@ export interface BottomPaginationProps {
         <button
           type="button"
           onClick={onLoadMore}
-          className="px-4 py-2 border text-base font-medium rounded-md text-gray-700 bg-gray-50 hover:border-[#97D700] transition cursor-pointer"
+          className="px-4 py-2 border text-base   rounded-md text-gray-700 bg-gray-50 hover:border-primary transition cursor-pointer"
         >
           Voir plus
         </button>

@@ -24,7 +24,7 @@ export default function HeroSearch() {
 
       <div className="relative flex items-center justify-center -mt-40 z-10">
         <div className="bg-white text-[#44474a] p-8 rounded-2xl shadow-xl w-full max-w-6xl mx-4">
-          <h1 className="text-xl md:text-2xl font-bold mb-2">
+          <h1 className="text-xl md:text-2xl mb-2">
             Recherchez & Réservez des billets de bus pas chers en ligne
           </h1>
           <p className="text-xs md:text-sm mb-4 text-gray-600">

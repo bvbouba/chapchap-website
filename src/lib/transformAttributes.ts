@@ -23,7 +23,7 @@ export async function getTransformedAttributes({
   // ✅ Fetch both attribute values and attributes list in parallel
   const [attributesRes] = await Promise.all([
     executeGraphQL(FilteringAttributesQueryDocument, {
-      variables: { channel, filter: {} },
+      variables: { channel, filter: {filterableInStorefront:true} },
       revalidate: 60,
     }),
   ]);

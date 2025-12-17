@@ -38,7 +38,7 @@ export function UserMenu({ user }: Props) {
 									href="/orders"
 									className={clsx(
 										active && "bg-neutral-100",
-										"block px-4 py-2 text-sm font-medium text-neutral-500 hover:text-neutral-700",
+										"block px-4 py-2 text-sm   text-neutral-500 hover:text-neutral-700",
 									)}
 								>
 									My orders
@@ -54,7 +54,7 @@ export function UserMenu({ user }: Props) {
 										type="submit"
 										className={clsx(
 											active && "bg-neutral-100",
-											"block px-4 py-2 text-start text-sm font-medium text-neutral-500 hover:text-neutral-700",
+											"block px-4 py-2 text-start text-sm   text-neutral-500 hover:text-neutral-700",
 										)}
 									>
 										Log Out

@@ -23,14 +23,14 @@ export function Pagination({
         <button
           type="button"
           onClick={onLoadMore}
-          className="relative inline-flex items-center px-4 py-2 border text-base font-medium rounded-md text-gray-700 bg-gray-50 hover:border-[#97D700] transition cursor-pointer"
+          className="relative inline-flex items-center px-4 py-2 border text-base   rounded-md text-gray-700 bg-gray-50 hover:border-primary transition cursor-pointer"
         >
           Charger plus
         </button>
         {itemsCount && totalCount && (
           <div className="text-sm text-gray-500 mt-2">
-            Affichage de <span className="font-medium">{itemsCount}</span> sur{" "}
-            <span className="font-medium">{totalCount}</span> produits
+            Affichage de <span className=" ">{itemsCount}</span> sur{" "}
+            <span className=" ">{totalCount}</span> produits
           </div>
         )}
       </div>

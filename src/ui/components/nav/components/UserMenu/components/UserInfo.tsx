@@ -9,7 +9,7 @@ export const UserInfo = ({ user }: Props) => {
 
 	return (
 		<p className="truncate px-5 py-2 text-xs text-neutral-700">
-			{userName && <span className="mb-0.5 block truncate font-bold">{userName}</span>}
+			{userName && <span className="mb-0.5 block truncate ">{userName}</span>}
 			{user.email}
 		</p>
 	);

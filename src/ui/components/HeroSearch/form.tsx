@@ -7,6 +7,7 @@ import { useFormik } from "formik";
 import * as Yup from "yup";
 import { TripSearchData, useTripSearch } from "@/context/TripSearchContext";
 import {TripSearchFormSkeleton} from "./skeleton";
+import { useProgress } from "@/context/ProgressContext";
 
 export type FormValues = {
   origin: {
@@ -48,6 +49,7 @@ const [tripType, setTripType] = useState<"oneway" | "roundtrip">(initialTripType
   const destinationRef = useRef<HTMLDivElement>(null);
   const today = new Date().toISOString().split("T")[0];
   const {setData} = useTripSearch()
+  const {setStep} = useProgress()
 
    // ✅ Load all cities
    useEffect(() => {
@@ -132,6 +134,7 @@ const [tripType, setTripType] = useState<"oneway" | "roundtrip">(initialTripType
             date:values.date
           }
         })
+        setStep("depart")
         onSubmit(payload);
       } else {
         console.log(payload);
@@ -227,21 +230,21 @@ const [tripType, setTripType] = useState<"oneway" | "roundtrip">(initialTripType
                   setTripType("oneway");
                   formik.setFieldValue("returnDate", "");
                 }}
-                className="accent-primary"
+                className="w-4 h-4 text-primary bg-gray-100 border-gray-300 focus:ring-primary dark:focus:ring-primary dark:ring-offset-gray-800 "
               />
-              <span>Aller simple</span>
+              <span className="text-sm">Aller simple</span>
             </label>
-            <label className="flex items-center gap-2 cursor-pointer">
+            {/* <label className="flex items-center gap-2 cursor-pointer">
               <input
                 type="radio"
                 name="tripType"
                 value="roundtrip"
                 checked={tripType === "roundtrip"}
                 onChange={() => setTripType("roundtrip")}
-                className="accent-primary"
+                className="w-4 h-4 text-primary bg-gray-100 border-gray-300 focus:ring-primary dark:focus:ring-primary dark:ring-offset-gray-800"
               />
-              <span>Aller-retour</span>
-            </label>
+              <span className="text-sm">Aller-retour</span>
+            </label> */}
           </div>
 
           {/* Form */}
@@ -269,7 +272,7 @@ const [tripType, setTripType] = useState<"oneway" | "roundtrip">(initialTripType
                 autoCorrect="off"
                 autoCapitalize="off"
                 spellCheck="false"
-                className="pl-10 pr-4 py-2 rounded-md bg-gray-100 text-gray-800 focus:outline-none w-full"
+                className="pl-10 pr-4 py-2 text-sm rounded-md bg-white border border-gray-300 text-gray-800 focus:ring-gray-400 focus:border-gray-400 w-full"
               />
               {showOriginSuggestions && originSuggestions.length > 0 && (
                 <ul className="absolute z-10 bg-white border border-gray-200 rounded-md shadow-md mt-1 w-full max-h-48 overflow-y-auto">
@@ -277,7 +280,7 @@ const [tripType, setTripType] = useState<"oneway" | "roundtrip">(initialTripType
                     <li
                       key={city.id}
                       onClick={() => handleSelect(city, "departure")}
-                      className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
+                      className="px-3 py-2 text-sm hover:bg-gray-100 cursor-pointer"
                     >
                       {city.name}
                     </li>
@@ -318,7 +321,7 @@ const [tripType, setTripType] = useState<"oneway" | "roundtrip">(initialTripType
                 autoCorrect="off"
                 autoCapitalize="off"
                 spellCheck="false"
-                className="pl-10 pr-4 py-2 rounded-md bg-gray-100 text-gray-800 focus:outline-none w-full"
+                className="pl-10 pr-4 py-2 text-sm rounded-md bg-white border border-gray-300 text-gray-800 focus:ring-gray-400 focus:border-gray-400 w-full"
               />
               {showDestinationSuggestions && destinationSuggestions.length > 0 && (
                 <ul className="absolute z-10 bg-white border border-gray-200 rounded-md shadow-md mt-1 w-full max-h-48 overflow-y-auto">
@@ -326,7 +329,7 @@ const [tripType, setTripType] = useState<"oneway" | "roundtrip">(initialTripType
                     <li
                       key={city.id}
                       onClick={() => handleSelect(city, "arrival")}
-                      className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
+                      className="px-3 py-2 text-sm hover:bg-gray-100 cursor-pointer"
                     >
                       {city.name}
                     </li>
@@ -359,8 +362,8 @@ const [tripType, setTripType] = useState<"oneway" | "roundtrip">(initialTripType
                   value={formik.values.date}
                   min={today}
                   onChange={formik.handleChange}
-                  className={`pl-10 pr-4 py-2 ${tripType === "roundtrip" ? "rounded-l-md" : "rounded-md"
-                    } bg-gray-100 text-gray-800 focus:outline-none w-full appearance-none [&::-webkit-calendar-picker-indicator]:hidden cursor-pointer`}
+                  className={`pl-10 pr-4 text-sm py-2 ${tripType === "roundtrip" ? "rounded-l-md" : "rounded-md"
+                    } "bg-white border border-gray-300 text-gray-800 focus:ring-gray-400 focus:border-gray-400 w-full appearance-none [&::-webkit-calendar-picker-indicator]:hidden cursor-pointer`}
                 />
                 {formik.touched.date && formik.errors.date && (
                   <p className="text-red-500 text-xs mt-1">{formik.errors.date}</p>
@@ -403,7 +406,7 @@ const [tripType, setTripType] = useState<"oneway" | "roundtrip">(initialTripType
                       if (!formik.values.returnDate) e.currentTarget.type = "text";
                     }}
                     onChange={formik.handleChange}
-                    className="pl-10 pr-4 py-2 border border-l-0 rounded-r-md bg-gray-100 text-gray-800 focus:outline-none w-full appearance-none [&::-webkit-calendar-picker-indicator]:hidden cursor-pointer"
+                    className="pl-10 pr-4 py-2 text-sm border border-l-0 rounded-r-md bg-white border-gray-300 text-gray-800 focus:ring-gray-400 focus:border-gray-400 w-full appearance-none [&::-webkit-calendar-picker-indicator]:hidden cursor-pointer"
                   />
                   {formik.touched.returnDate && formik.errors.returnDate && (
                     <p className="text-red-500 text-xs mt-1">{formik.errors.returnDate}</p>
@@ -416,7 +419,7 @@ const [tripType, setTripType] = useState<"oneway" | "roundtrip">(initialTripType
             <div className="col-span-1 md:col-span-3 flex justify-center">
             <button
                 type="submit"
-                className="px-6 py-2 bg-[#97D700] text-white font-semibold rounded-md hover:bg-[#85c200] transition w-full md:w-auto"
+                className="px-6 py-2 uppercase bg-primary text-white rounded-md hover:bg-secondary transition w-full md:w-auto text-sm font-semibold"
               >
                 Rechercher
               </button>

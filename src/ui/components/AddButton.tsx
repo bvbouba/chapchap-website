@@ -24,7 +24,7 @@ export function AddButton({ disabled, addItem }: AddButtonProps) {
       type="button"
       disabled={isButtonDisabled}
       onClick={handleClick}
-      className="mt-2 bg-[#97D700] text-white font-semibold py-2 px-4 rounded-md text-sm hover:bg-green-700 transition disabled:cursor-not-allowed disabled:opacity-70"
+      className="mt-2 bg-primary text-white py-2 px-4 rounded-md text-sm hover:bg-green-700 transition disabled:cursor-not-allowed disabled:opacity-70"
     >
       {isLoading ? (
         <div className="inline-flex items-center">

@@ -14,9 +14,12 @@ const config: Config = {
 			fontFamily: {
 				sans: ["Proxima Vara", "Helvetica Neue", "Helvetica", "Arial", "sans-serif"],
 			},
-			fontSize: {
-				base: ["14px", "1.4285714286"],
-			},
+			// fontSize: {
+			// 	base: ["14px", "1.4285714286"],
+			// },
+			maxWidth: {
+				"6xl": "980px", 
+			  },
 		},
 	},
 	plugins: [TypographyPlugin, FormPlugin, ContainerQueriesPlugin],

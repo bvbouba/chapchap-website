@@ -3,6 +3,7 @@ import { Footer } from "@/ui/components/Footer";
 import { Header } from "@/ui/components/Header";
 import { TripSearchProvider } from "@/context/TripSearchContext";
 import { GlobalLoadingProvider } from "@/context/GlobalLoadingContext";
+import { ProgressProvider } from "@/context/ProgressContext";
 
 export const metadata = {
 	title: "Saleor Storefront example",
@@ -18,11 +19,13 @@ export default async function RootLayout(props: {
 	return (
 		<GlobalLoadingProvider>
 		<TripSearchProvider>
+		<ProgressProvider>
 			<Header channel={channel} />
 			<div className="flex min-h-[calc(100dvh-64px)] flex-col">
 				<main className="flex-1">{props.children}</main>
 				<Footer channel={channel} />
 			</div>
+			</ProgressProvider>
 		</TripSearchProvider>
 		</GlobalLoadingProvider>
 	);

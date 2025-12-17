@@ -31,7 +31,7 @@ export const SummaryItem = ({ line, children }: SummaryItemProps) => {
 			<div className="relative flex flex-1 flex-col justify-between pl-4">
 				<div className="flex justify-between justify-items-start gap-4">
 					<div className="flex flex-col gap-y-1">
-						<p className="font-bold">{productName}</p>
+						<p className="">{productName}</p>
 						<p className="text-xs text-neutral-500">{attributesText}</p>
 					</div>
 					{children}

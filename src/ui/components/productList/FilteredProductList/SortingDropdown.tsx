@@ -23,7 +23,7 @@ export function SortingDropdown({ optionToggle, chosen }: SortingDropdownProps) 
         <>
           <div>
             <Menu.Button
-              className="inline-flex justify-between items-center w-60 px-4 py-2 bg-white text-gray-700 font-medium rounded-md shadow-sm border border-gray-200 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand"
+              className="inline-flex justify-between items-center w-60 px-4 py-2 bg-white text-gray-700   rounded-md shadow-sm border border-gray-200 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand"
               data-testid="sortBy"
             >
               {label ? `Trier par: ${label}` : "Trier"}

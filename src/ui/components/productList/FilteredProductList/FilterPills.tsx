@@ -36,7 +36,7 @@ export default function FilterPills({
 
       <button
         onClick={onClearFilters}
-        className="ml-2 border border-[#97D700] text-[#97D700] px-3 py-1.5 rounded-md text-sm font-medium hover:bg-[#97D700] hover:text-white transition"
+        className="ml-2 border border-primary text-primary px-3 py-1.5 rounded-md text-sm   hover:bg-primary hover:text-white transition"
       >
         Tout effacer
       </button>

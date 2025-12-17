@@ -10,7 +10,7 @@ export const OrderConfirmation = () => {
 		<main className="grid grid-cols-1 gap-x-16 lg:grid-cols-2">
 			<div>
 				<header>
-					<p className="mb-2 text-lg font-bold" data-testid="orderConfrmationTitle">
+					<p className="mb-2 text-lg" data-testid="orderConfrmationTitle">
 						Order #{order.number} confirmed
 					</p>
 					<p className="text-base">

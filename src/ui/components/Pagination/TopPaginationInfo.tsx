@@ -8,8 +8,8 @@ export interface TopPaginationInfoProps {
   
     return (
       <div className="text-sm text-gray-600">
-        Affichage de <span className="font-medium">{itemsCount}</span> sur{" "}
-        <span className="font-medium">{totalCount}</span> {totalCount > 1 ? "trajets":"trajet"}
+        Affichage de <span className=" ">{itemsCount}</span> sur{" "}
+        <span className=" ">{totalCount}</span> {totalCount > 1 ? "trajets":"trajet"}
       </div>
     );
   }

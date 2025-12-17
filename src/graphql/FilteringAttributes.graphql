@@ -19,6 +19,10 @@ fragment AttributeFilter on Attribute {
       cursor
     }
   }
+  metadata{
+          key
+          value
+        }
 }
 
 
