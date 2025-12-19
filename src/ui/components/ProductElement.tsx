@@ -9,10 +9,11 @@ import { useParams, useRouter } from "next/navigation";
 import { useGlobalLoading } from "@/context/GlobalLoadingContext";
 import { useTripSearch } from "@/context/TripSearchContext";
 import { useProgress } from "@/context/ProgressContext";
+import { Arrow, BusIcon } from "./Svg";
 
 export function ProductElement({
 	variant,
-	priority
+	priority,
 }: {
 	variant: ProductVariantListItemFragment;
 	loading: "eager" | "lazy";
@@ -21,8 +22,8 @@ export function ProductElement({
 	const attributes = variant.attributes || [];
 	const params = useParams<{ channel: string }>();
 	const router = useRouter();
-    const { setLoading } = useGlobalLoading();
-	const {setData,data}=useTripSearch()
+	const { setLoading } = useGlobalLoading();
+	const { setData, data } = useTripSearch();
 	const { setStep } = useProgress();
 
 	const handleAddToCart = async () => {
@@ -33,22 +34,22 @@ export function ProductElement({
 				variantId: variant.id,
 			});
 			if (data?.tripType === "oneway") {
-			setStep("summary")
-			router.push(`/${params.channel}/cart`);
-			 } else if (data?.tripType === "roundtrip" && res?.checkout?.lines.length === 1){
+				setStep("summary");
+				router.push(`/${params.channel}/cart`);
+			} else if (data?.tripType === "roundtrip" && res?.checkout?.lines.length === 1) {
 				setData({
 					...data,
-					query:{
-						origin:data.destination.slug,
-						destination:data.origin.slug,
-						date:data.returnDate ?? ""
-					}
-				})
-				setStep("return")
-			 }else if (data?.tripType === "roundtrip" && res?.checkout?.lines.length === 2){
-				setStep("summary")
+					query: {
+						origin: data.destination.slug,
+						destination: data.origin.slug,
+						date: data.returnDate ?? "",
+					},
+				});
+				setStep("return");
+			} else if (data?.tripType === "roundtrip" && res?.checkout?.lines.length === 2) {
+				setStep("summary");
 				router.push(`/${params.channel}/cart`);
-			 }
+			}
 		} catch (error) {
 			console.error("Erreur lors de l’ajout au panier :", error);
 		} finally {
@@ -57,10 +58,7 @@ export function ProductElement({
 	};
 
 	// Helper: get attribute value (name or value)
-	const getAttrValue = (
-		attrs: typeof attributes,
-		slug: string
-	): string | undefined => {
+	const getAttrValue = (attrs: typeof attributes, slug: string): string | undefined => {
 		const found = attrs.find((attr) => attr.attribute?.slug === slug);
 		return found?.values?.[0]?.name ?? found?.values?.[0]?.value ?? undefined;
 	};
@@ -94,7 +92,7 @@ export function ProductElement({
 		const h = Math.floor(mins / 60);
 		const m = mins % 60;
 		if (h === 0) return `${m}min`;
-		return `${h}h${m.toString().padStart(2, "0")}`;
+		return `${h}h ${m.toString().padStart(2, "0")}m`;
 	};
 
 	const durationRaw = getAttrValue(attributes, "estimated-duration");
@@ -129,11 +127,11 @@ export function ProductElement({
 			{/* Product Card */}
 			<div
 				key={variant.id}
-				className="bg-white border border-gray-200 rounded-2xl shadow-sm p-5 flex flex-col md:flex-row justify-between items-start md:items-center hover:shadow-md transition"
+				className="flex flex-col items-start justify-between rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition hover:shadow-md md:flex-row md:items-center"
 			>
 				{/* LEFT SIDE: company + times */}
 				<div className="flex flex-col">
-					<div className="flex items-center gap-2 mb-3">
+					<div className="mb-3 flex items-center gap-2">
 						{variant.product.thumbnail?.url && (
 							<ProductImageWrapper
 								src={variant.product.thumbnail.url}
@@ -141,57 +139,43 @@ export function ProductElement({
 								priority={priority}
 								width={140}
 								height={40}
-								className="w-[70px] h-[20px]"
+								className="h-[20px] w-[70px]"
 							/>
 						)}
-						<span className="text-gray-700 text-sm  ">
-							{company ?? "Compagnie inconnue"}
-						</span>
+						<span className="text-sm text-gray-700  ">{company ?? "Compagnie inconnue"}</span>
 					</div>
 
 					{/* Times */}
 					<div className="flex items-center gap-6">
+						<span>
+							<BusIcon />
+						</span>
 						<div className="text-center">
-							<div className="text-lg text-primary">
-								{departureTimeStr}
-							</div>
-							<div className="text-xs text-gray-600 mt-1">
-								{departureStation ?? ""}
-							</div>
+							<div className="text-lg text-xl font-semibold">{departureTimeStr}</div>
+							<div className="mt-1 text-xs text-gray-600">{departureStation?.split(",")[0] ?? ""}</div>
 						</div>
 
-						<div className="flex flex-col items-center text-gray-400">
-							<div className="text-lg ">→</div>
-							{readableDuration && (
-								<div className="text-xs text-gray-500 mt-1">
-									{readableDuration}
-								</div>
-							)}
+						<div className="relative flex w-32 items-center justify-center text-gray-400">
+							<Arrow />
+							<span className="absolute bg-white px-1 text-xs italic text-gray-500">{readableDuration}</span>
 						</div>
 
 						<div className="text-center">
-							<div className="text-lg text-primary">
-								{arrivalTimeStr ?? "— —"}
-							</div>
-							<div className="text-xs text-gray-600 mt-1">
-								{arrivalStation ?? ""}
-							</div>
+							<div className="text-lg text-xl font-semibold">{arrivalTimeStr ?? "— —"}</div>
+							<div className="mt-1 text-xs text-gray-600">{arrivalStation?.split(",")[0] ?? ""}</div>
 						</div>
 					</div>
 				</div>
 
 				{/* RIGHT SIDE: price & action */}
-				<div className="text-right mt-4 md:mt-0">
-					<div className="text-xl text-[#d13b3b]">
+				<div className="mt-4 text-right md:mt-0">
+					<div className="text-xl font-semibold">
 						{formatMoney(
 							variant?.pricing?.price?.gross.amount ?? 0,
-							variant?.pricing?.price?.gross.currency ?? ""
+							variant?.pricing?.price?.gross.currency ?? "",
 						)}
 					</div>
-					<AddButton
-						disabled={!variant?.quantityAvailable}
-						addItem={handleAddToCart}
-					/>
+					<AddButton disabled={!variant?.quantityAvailable} addItem={handleAddToCart} />
 				</div>
 			</div>
 		</div>

@@ -1,5 +1,4 @@
 import React, { type PropsWithChildren } from "react";
-import { Button } from "@/checkout/components/Button";
 import { Title } from "@/checkout/components/Title";
 
 export interface SignInFormContainerProps {
@@ -19,33 +18,30 @@ export const SignInFormContainer: React.FC<PropsWithChildren<SignInFormContainer
 	children,
 }) => {
 	return (
-		<div className="py-4">
-			<div className="mb-2 flex flex-col">
-				<div className="flex flex-row items-baseline justify-between @container">
+		<>
+			<section className="mx-auto my-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+				{/* Title */}
+				<div className="mb-4 text-center">
 					<Title>{title}</Title>
-					<div className="flex flex-row">
-						{redirectSubtitle && (
-							<p color="secondary" className="mr-2 hidden @sm:inline">
-								{redirectSubtitle}
-							</p>
-						)}
-						{redirectButtonLabel && (
-							<Button
-								ariaLabel={redirectButtonLabel}
-								onClick={onSectionChange}
-								variant="tertiary"
-								label={redirectButtonLabel}
-							/>
-						)}
-					</div>
+
+					{redirectSubtitle && <p className="mt-2 text-sm text-gray-600">{redirectSubtitle}</p>}
+
+					{subtitle && <p className="mt-1 text-sm text-gray-500">{subtitle}</p>}
 				</div>
-				{subtitle && (
-					<p color="secondary" className="mt-3">
-						{subtitle}
-					</p>
+
+				{/* Action Button */}
+				{redirectButtonLabel && (
+					<div className="mt-6 text-center">
+						<button
+							onClick={onSectionChange}
+							className="rounded-md bg-[#97D700] px-6 py-2 font-semibold text-white transition hover:bg-green-600"
+						>
+							{redirectButtonLabel}
+						</button>
+					</div>
 				)}
-			</div>
+			</section>
 			{children}
-		</div>
+		</>
 	);
 };

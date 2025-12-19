@@ -1,7 +1,6 @@
 import * as Checkout from "@/lib/checkout";
 import { LinkWithChannel } from "@/ui/atoms/LinkWithChannel";
 import CartDetail from "@/ui/components/cart/CartDetail";
-import CartHeader from "@/ui/components/cart/Header";
 import ProgressHeader from "@/ui/components/ProgressHeader";
 
 export const metadata = {
@@ -32,10 +31,9 @@ export default async function Page(props: { params: Promise<{ channel: string }>
 	}
 	return (
 		<>
-		<ProgressHeader />
-	
-		<CartDetail checkout={checkout}/>
+			<ProgressHeader checkout={checkout} />
+
+			<CartDetail checkout={checkout} />
 		</>
 	);
 }
-

@@ -1,11 +1,11 @@
 mutation CheckoutEmailUpdate($checkoutId: ID!, $email: String!) {
-  checkoutEmailUpdate(email: $email, checkoutId: $checkoutId) {
-    checkout {
-      ...Checkout
-    }
-    errors {
-      field
-      message
-    }
-  }
+	checkoutEmailUpdate(email: $email, checkoutId: $checkoutId) {
+		checkout {
+			...Checkout
+		}
+		errors {
+			field
+			message
+		}
+	}
 }

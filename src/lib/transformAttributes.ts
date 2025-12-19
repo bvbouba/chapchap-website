@@ -1,7 +1,4 @@
-import {
-  AttributeFilterFragment,
-  FilteringAttributesQueryDocument,
-} from "@/gql/graphql";
+import { AttributeFilterFragment, FilteringAttributesQueryDocument } from "@/gql/graphql";
 import { executeGraphQL } from "@/lib/graphql";
 import { mapEdgesToItems } from "@/lib/maps";
 
@@ -10,63 +7,58 @@ import { mapEdgesToItems } from "@/lib/maps";
  * It refines departure-station and arrival-station attributes according to provided values.
  */
 export async function getTransformedAttributes({
-  originSlug,
-  destinationSlug,
-  channel = "ci",
+	originSlug,
+	destinationSlug,
+	channel = "ci",
 }: {
-  originSlug: string;
-  destinationSlug: string;
-  channel?: string;
+	originSlug: string;
+	destinationSlug: string;
+	channel?: string;
 }): Promise<{
-  attributes: AttributeFilterFragment[];
+	attributes: AttributeFilterFragment[];
 }> {
-  // ✅ Fetch both attribute values and attributes list in parallel
-  const [attributesRes] = await Promise.all([
-    executeGraphQL(FilteringAttributesQueryDocument, {
-      variables: { channel, filter: {filterableInStorefront:true} },
-      revalidate: 60,
-    }),
-  ]);
+	// ✅ Fetch both attribute values and attributes list in parallel
+	const [attributesRes] = await Promise.all([
+		executeGraphQL(FilteringAttributesQueryDocument, {
+			variables: { channel, filter: { filterableInStorefront: true } },
+			revalidate: 60,
+		}),
+	]);
 
+	// ✅ Map & filter attributes
+	let attributes: AttributeFilterFragment[] = mapEdgesToItems(attributesRes.attributes);
+	attributes = attributes.filter((attr) => attr.choices?.edges.length);
 
-  // ✅ Map & filter attributes
-  let attributes: AttributeFilterFragment[] = mapEdgesToItems(attributesRes.attributes);
-  attributes = attributes.filter((attr) => attr.choices?.edges.length);
+	// ✅ Refine station attributes based on origin/destination slug
+	attributes = attributes.map((attr): AttributeFilterFragment => {
+		if (attr.slug === "departure-station") {
+			const filteredEdges =
+				attr.choices?.edges.filter((edge) => edge.node.slug?.includes(originSlug || "")) ?? [];
 
-  // ✅ Refine station attributes based on origin/destination slug
-  attributes = attributes.map((attr): AttributeFilterFragment => {
-    if (attr.slug === "departure-station") {
-      const filteredEdges =
-        attr.choices?.edges.filter((edge) =>
-          edge.node.slug?.includes(originSlug|| "")
-        ) ?? [];
+			return {
+				...attr,
+				choices: {
+					...attr.choices!,
+					edges: filteredEdges,
+				},
+			};
+		}
 
-      return {
-        ...attr,
-        choices: {
-          ...attr.choices!,
-          edges: filteredEdges,
-        },
-      };
-    }
+		if (attr.slug === "arrival-station") {
+			const filteredEdges =
+				attr.choices?.edges.filter((edge) => edge.node.slug?.includes(destinationSlug || "")) ?? [];
 
-    if (attr.slug === "arrival-station") {
-      const filteredEdges =
-        attr.choices?.edges.filter((edge) =>
-          edge.node.slug?.includes(destinationSlug || "")
-        ) ?? [];
+			return {
+				...attr,
+				choices: {
+					...attr.choices!,
+					edges: filteredEdges,
+				},
+			};
+		}
 
-      return {
-        ...attr,
-        choices: {
-          ...attr.choices!,
-          edges: filteredEdges,
-        },
-      };
-    }
+		return attr;
+	});
 
-    return attr;
-  });
-
-  return { attributes };
+	return { attributes };
 }

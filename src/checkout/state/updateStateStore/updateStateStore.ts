@@ -49,6 +49,7 @@ const useCheckoutUpdateStateStore = createWithEqualityFn<CheckoutUpdateStateStor
 			userAddressCreate: "success",
 			userAddressDelete: "success",
 			userAddressUpdate: "success",
+			checkoutContactUpdate: "success",
 		},
 		actions: {
 			setSubmitInProgress: (submitInProgress: boolean) => set({ submitInProgress }),

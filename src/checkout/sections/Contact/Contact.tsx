@@ -13,9 +13,10 @@ const onlyContactShownSections: Section[] = ["signIn", "resetPassword"];
 
 interface ContactProps {
 	setShowOnlyContact: (value: boolean) => void;
+	onContinueToPayment?: () => void;
 }
 
-export const Contact: FC<ContactProps> = ({ setShowOnlyContact }) => {
+export const Contact: FC<ContactProps> = ({ setShowOnlyContact, onContinueToPayment }) => {
 	useCustomerAttach();
 	const { user, authenticated } = useUser();
 	const [email, setEmail] = useState(user?.email || "");
@@ -67,7 +68,12 @@ export const Contact: FC<ContactProps> = ({ setShowOnlyContact }) => {
 	return (
 		<div>
 			{isCurrentSection("guestUser") && (
-				<GuestUser onSectionChange={handleChangeSection("signIn")} onEmailChange={setEmail} email={email} />
+				<GuestUser
+					onSectionChange={handleChangeSection("signIn")}
+					onEmailChange={setEmail}
+					email={email}
+					onContinueToPayment={onContinueToPayment}
+				/>
 			)}
 
 			{isCurrentSection("signIn") && (

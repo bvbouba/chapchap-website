@@ -1,119 +1,133 @@
 "use client";
 
 import { ChevronRight, CheckIcon } from "lucide-react";
-import { useProgress } from "@/context/ProgressContext";
+import { useParams, usePathname } from "next/navigation";
 import { useTripSearch } from "@/context/TripSearchContext";
+import { CheckoutFragment } from "@/gql/graphql";
 
 interface Props {
-  destinationName?: string;
-  date?: string;
+	destinationName?: string;
+	date?: string;
+	checkout?: CheckoutFragment;
 }
 
-export default function ProgressHeader({ destinationName, date }: Props) {
-  const { currentStep } = useProgress();
-  const { data } = useTripSearch();
+type StepKey = "depart" | "return" | "summary" | "checkout";
 
-  const formattedDate = date
-    ? new Date(`${date}T00:00:00Z`).toLocaleDateString("fr-FR", {
-      day: "2-digit",
-      month: "long",
-      year: "numeric",
-      timeZone: "UTC",
-    })
-    : "";
+/**
+ * Map URL → step
+ */
+function getCurrentStepFromPath(pathname: string): StepKey {
+	if (pathname.includes("/trips")) return "depart";
+	if (pathname.includes("/return")) return "return";
+	if (pathname.includes("/cart")) return "summary";
+	if (pathname.includes("/checkout")) return "checkout";
 
-  // Steps
-  const baseSteps = [
-    {
-      key: "depart",
-      label:
-        currentStep === "depart" ? (
-          <span className="inline-flex items-end ">
-            <span className="font-semibold text-xl">{`Départ vers ${destinationName}`}</span>
-            {formattedDate ? <span className="text-base">&nbsp;le {formattedDate}</span> : null}
-          </span>
-        ) : (
-          "Départ"
-        ),
-    },
-    ...(data?.tripType === "roundtrip"
-      ? [{ key: "return", label: "Retour" }]
-      : []),
-    { key: "summary", label: "Résumé du voyage" },
-    { key: "checkout", label: "Paiement" },
-  ];
+	// fallback (safe default)
+	return "depart";
+}
 
-  const isCompleted = (stepKey: string) =>
-    baseSteps.findIndex((s) => s.key === currentStep) >
-    baseSteps.findIndex((s) => s.key === stepKey);
+export default function ProgressHeader({ destinationName, date, checkout }: Props) {
+	const pathname = usePathname();
+	const currentStep = getCurrentStepFromPath(pathname);
+	const { data } = useTripSearch();
+	const params = useParams<{ channel: string }>();
 
-  const isActive = (stepKey: string) => currentStep === stepKey;
+	const attributes = checkout?.lines[0].variant.attributes || [];
 
-  const currentIndex = baseSteps.findIndex((s) => s.key === currentStep);
-  const leftSteps = baseSteps.slice(0, currentIndex + 1);
-  const rightSteps = baseSteps.slice(currentIndex + 1);
+	console.log(attributes);
 
-  return (
-    <div className="relative shadow-md flex items-center justify-center border-b border-gray-300 bg-white">
-      <div className="w-full flex justify-between items-center py-4 px-8 max-w-6xl text-sm">
+	// router.push(`/${params.channel}/trips/${values.origin.id}/${values.destination.id}`);
 
-        {/* LEFT SIDE */}
-        <div className="flex items-center gap-3 text-gray-700">
-          {leftSteps.map((step, index) => (
-            <div key={step.key} className="flex items-center gap-1">
+	const formattedDate = date
+		? new Date(`${date}T00:00:00Z`).toLocaleDateString("fr-FR", {
+				day: "2-digit",
+				month: "long",
+				year: "numeric",
+				timeZone: "UTC",
+			})
+		: "";
 
-              {/* Dot for active / empty */}
-              {!isCompleted(step.key) && !isActive(step.key) && (
-                <div className="w-4 h-4 rounded-full border-2 border-gray-300" />
-              )}
+	// 🧭 Steps
+	const baseSteps = [
+		{
+			key: "depart",
+			label:
+				currentStep === "depart" ? (
+					<span className="inline-flex items-end">
+						<span className="font-semibold">{`Départ vers ${destinationName}`}</span>
+						{formattedDate && <span className="">&nbsp;le {formattedDate}</span>}
+					</span>
+				) : (
+					"Départ"
+				),
+		},
+		...(data?.tripType === "roundtrip" ? [{ key: "return", label: "Retour" }] : []),
+		{
+			key: "summary",
+			label:
+				currentStep === "summary" ? (
+					<span className="font-semibold">Résumé du voyage</span>
+				) : (
+					"Résumé du voyage"
+				),
+		},
+		{
+			key: "checkout",
+			label: currentStep === "checkout" ? <span className="font-semibold">Paiement</span> : "Paiement",
+		},
+	] as const;
 
-              {/* Label */}
-              <span
-                className={`${isActive(step.key)
-                    ? "text-gray-700"
-                    : isCompleted(step.key)
-                      ? "text-gray-700"
-                      : "text-gray-500"
-                  }`}
-              >
-                {step.label}
-              </span>
+	const currentIndex = baseSteps.findIndex((s) => s.key === currentStep);
 
-              {/* Check AFTER label */}
-              {isCompleted(step.key) && (
-                <CheckIcon className="w-4 h-4 text-primary ml-1" />
-              )}
+	const isCompleted = (stepKey: string) => baseSteps.findIndex((s) => s.key === stepKey) < currentIndex;
 
-              {/* Separator */}
-              {index < leftSteps.length - 1 && (
-                <ChevronRight className="w-5 h-5 text-gray-400 mx-2" />
-              )}
-            </div>
-          ))}
-        </div>
+	const isActive = (stepKey: string) => stepKey === currentStep;
 
-        {/* RIGHT SIDE (remaining steps) */}
-        <div className="flex items-center gap-3 text-gray-500">
-          {rightSteps.map((step, index) => (
-            <div key={step.key} className="flex items-center gap-2">
+	const leftSteps = baseSteps.slice(0, currentIndex + 1);
+	const rightSteps = baseSteps.slice(currentIndex + 1);
 
-              {/* ALWAYS show ChevronRight BEFORE the first item */}
-              <ChevronRight className="w-6 h-6 text-gray-300" />
+	return (
+		<div className="relative flex items-center justify-center border-b border-gray-300 bg-white shadow-md">
+			<div className="flex w-full max-w-6xl items-center justify-between px-8 py-4 text-base">
+				{/* LEFT (completed + active) */}
+				<div className="flex items-center gap-3 text-gray-700">
+					{leftSteps.map((step, index) => (
+						<div key={step.key} className="flex items-center gap-1">
+							{/* Dot */}
+							{!isCompleted(step.key) && !isActive(step.key) && (
+								<div className="h-4 w-4 rounded-full border-2 border-gray-300" />
+							)}
 
-              {/* Dot */}
-              {
-                isCompleted(step.key) ? <>
-                  <div className="w-4 h-4 rounded-full border-2 border-gray-300" />
-                  <span className="text-base">{step.label}</span> </> :
-                  <span className="text-base">{step.label}</span>
+							{/* Label */}
+							<span
+								className={
+									isActive(step.key) || isCompleted(step.key)
+										? "text-base text-gray-700"
+										: "text-base text-gray-500"
+								}
+							>
+								{step.label}
+							</span>
 
-              }
-            </div>
+							{/* Check AFTER label */}
+							{isCompleted(step.key) && <CheckIcon className="ml-1 h-4 w-4 text-primary" />}
 
-          ))}
-        </div>
+							{/* Chevron */}
+							{index < leftSteps.length - 1 && <ChevronRight className="mx-2 h-5 w-5 text-gray-400" />}
+						</div>
+					))}
+				</div>
 
-      </div>
-    </div>
-  );
+				{/* RIGHT (remaining) */}
+				<div className="flex items-center gap-3 text-gray-500">
+					{rightSteps.map((step) => (
+						<div key={step.key} className="flex items-center gap-2">
+							<ChevronRight className="h-6 w-6 text-gray-300" />
+							<span className="text-base">{step.label}</span>
+						</div>
+					))}
+				</div>
+			</div>
+		</div>
+	);
 }

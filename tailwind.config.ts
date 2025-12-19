@@ -9,7 +9,7 @@ const config: Config = {
 		extend: {
 			colors: {
 				primary: { DEFAULT: "#97D700", light: "#B8F24A", dark: "#6FA300" },
-				secondary: { DEFAULT: "#44474A", light: "#6B6E71", dark: "#2C2E30" },
+				secondary: { DEFAULT: "#d13b3b", light: "#6B6E71", dark: "#991a1b" },
 			},
 			fontFamily: {
 				sans: ["Proxima Vara", "Helvetica Neue", "Helvetica", "Arial", "sans-serif"],
@@ -18,8 +18,8 @@ const config: Config = {
 			// 	base: ["14px", "1.4285714286"],
 			// },
 			maxWidth: {
-				"6xl": "980px", 
-			  },
+				"6xl": "980px",
+			},
 		},
 	},
 	plugins: [TypographyPlugin, FormPlugin, ContainerQueriesPlugin],

@@ -1,88 +1,134 @@
-import { useEffect, useState, useMemo } from "react";
-import { bool, object, type Schema, string } from "yup";
-import { useUserRegisterMutation } from "@/checkout/graphql";
+import { useMemo } from "react";
+import { array, object, string, type Schema } from "yup";
 import { useCheckout } from "@/checkout/hooks/useCheckout";
 import {
 	useCheckoutUpdateStateActions,
 	useCheckoutUpdateStateChange,
-	useUserRegisterState,
 } from "@/checkout/state/updateStateStore";
 import { useCheckoutFormValidationTrigger } from "@/checkout/hooks/useCheckoutFormValidationTrigger";
 import { useFormSubmit } from "@/checkout/hooks/useFormSubmit";
 import { type ChangeHandler, hasErrors, useForm } from "@/checkout/hooks/useForm";
-import { getCurrentHref } from "@/checkout/lib/utils/locale";
-import { useCheckoutEmailUpdate } from "@/checkout/sections/GuestUser/useCheckoutEmailUpdate";
 import { useErrorMessages } from "@/checkout/hooks/useErrorMessages";
-import { useUser } from "@/checkout/hooks/useUser";
-import { isValidEmail } from "@/checkout/lib/utils/common";
+import { CountryCode } from "@/gql/graphql";
+import { updateCheckoutContactInfo } from "@/actions";
+
+export interface Passenger {
+	firstName: string;
+	lastName: string;
+}
 
 export interface GuestUserFormData {
 	email: string;
-	password: string;
-	createAccount: boolean;
+	phone: string;
+	passengers: Passenger[];
 }
 
 interface GuestUserFormProps {
-	// shared between sign in form and guest user form
 	initialEmail: string;
+	onContinueToPayment?: () => void;
 }
 
-export const useGuestUserForm = ({ initialEmail }: GuestUserFormProps) => {
+export const useGuestUserForm = ({ initialEmail, onContinueToPayment }: GuestUserFormProps) => {
 	const { checkout } = useCheckout();
-	const { user } = useUser();
-	const shouldUserRegister = useUserRegisterState();
-	const { setShouldRegisterUser, setSubmitInProgress } = useCheckoutUpdateStateActions();
+	const { setSubmitInProgress } = useCheckoutUpdateStateActions();
 	const { errorMessages } = useErrorMessages();
-	const { setCheckoutUpdateState: setRegisterState } = useCheckoutUpdateStateChange("userRegister");
-	const [, userRegister] = useUserRegisterMutation();
-	const [userRegisterDisabled, setUserRegistrationDisabled] = useState(false);
-	const { setCheckoutUpdateState } = useCheckoutUpdateStateChange("checkoutEmailUpdate");
+	const { setCheckoutUpdateState } = useCheckoutUpdateStateChange("checkoutContactUpdate");
 
+	// ✅ Validation schema
 	const validationSchema = object({
-		createAccount: bool(),
-		email: string().email(errorMessages.invalid).required(errorMessages.required),
-		password: string().when(["createAccount"], ([createAccount], field) =>
-			createAccount ? field.min(8, "Password must be at least 8 characters").required() : field,
-		),
+		phone: string().required(errorMessages.required),
+		email: string().email(errorMessages.invalid).optional(),
+		passengers: array()
+			.of(
+				object({
+					firstName: string().required(errorMessages.required),
+					lastName: string().required(errorMessages.required),
+				}),
+			)
+			.min(1, "Au moins un passager est requis"),
 	}) as Schema<GuestUserFormData>;
 
-	const defaultFormData: GuestUserFormData = {
-		email: initialEmail || checkout.email || "",
-		password: "",
-		createAccount: false,
-	};
+	// ✅ Passenger initialization (based on quantity)
+	const passengers0 = useMemo(() => {
+		const quantity = checkout.lines?.[0]?.quantity || 1;
+		// Try to reuse passengers stored in checkout.note if available
+		const existingPassengers =
+			checkout.note?.split(";").map((p) => {
+				const [lastName, firstName] = p.split(",");
+				return { lastName: lastName || "", firstName: firstName || "" };
+			}) || [];
 
-	const onSubmit = useFormSubmit<GuestUserFormData, typeof userRegister>(
+		// Fill up or truncate to match quantity
+		const filled = Array.from({ length: quantity }, (_, i) => {
+			return (
+				existingPassengers[i] || {
+					firstName: checkout.billingAddress?.firstName || "",
+					lastName: checkout.billingAddress?.lastName || "",
+				}
+			);
+		});
+
+		return filled;
+	}, [checkout.lines, checkout.note, checkout.billingAddress]);
+
+	const defaultFormData: GuestUserFormData = {
+		email:
+			initialEmail ||
+			(checkout.email && checkout.email !== "anonymous@chapchaptickets.com" ? checkout.email : "") ||
+			"",
+		phone: checkout.billingAddress?.phone || "",
+		passengers: passengers0,
+	};
+	// ✅ Submission logic (auto)
+	const onSubmit = useFormSubmit<GuestUserFormData, typeof updateCheckoutContactInfo>(
 		useMemo(
 			() => ({
-				scope: "userRegister",
-				onSubmit: userRegister,
-				onStart: () => setShouldRegisterUser(false),
+				scope: "checkoutContactUpdate",
+				onSubmit: async (data) => {
+					console.log("🟡 Submitting checkout update with:", data);
+					const result = await updateCheckoutContactInfo(data);
+					console.log("✅ Checkout update result:", result);
+					return result;
+				},
 				shouldAbort: ({ formData, formHelpers: { validateForm } }) => {
 					const errors = validateForm(formData);
 					return hasErrors(errors);
 				},
-				parse: ({ email, password, channel }) => ({
-					input: {
-						email,
-						password,
-						channel,
-						redirectUrl: getCurrentHref(),
-					},
-				}),
-				onError: ({ errors }) => {
-					setSubmitInProgress(false);
-					const hasAccountForCurrentEmail = errors.some(({ code }) => code === "UNIQUE");
+				parse: ({ email, phone, passengers }) => {
+					const customerNote = passengers.map((p) => `${p.lastName},${p.firstName}`).join(";");
 
-					if (hasAccountForCurrentEmail) {
-						setUserRegistrationDisabled(true);
-						// @todo this logic will be removed once new register flow is implemented
-						setTimeout(() => setRegisterState("success"), 100);
-					}
+					const firstPassenger = passengers[0] || { firstName: "", lastName: "" };
+					return {
+						checkoutId: checkout.id,
+						email,
+						address: {
+							phone,
+							firstName: firstPassenger.firstName,
+							lastName: firstPassenger.lastName,
+							country: CountryCode.Ci,
+							city: "Abidjan",
+							streetAddress1: "Abidjan",
+						},
+						customerNote,
+					};
 				},
-				onSuccess: () => setUserRegistrationDisabled(true),
+				onStart: () => {
+					console.log("⏳ Starting checkout contact update...");
+					setSubmitInProgress(true);
+				},
+				onError: ({ errors }) => {
+					console.error("❌ Checkout contact update error", errors);
+					setSubmitInProgress(false);
+				},
+				onSuccess: () => {
+					setCheckoutUpdateState("success");
+					console.log("✅ Checkout contact info successfully updated!");
+					setSubmitInProgress(false);
+					// 🚀 trigger continuation callback here
+					onContinueToPayment?.();
+				},
 			}),
-			[setRegisterState, setShouldRegisterUser, setSubmitInProgress, userRegister],
+			[checkout.id, setSubmitInProgress, setCheckoutUpdateState],
 		),
 	);
 
@@ -95,43 +141,18 @@ export const useGuestUserForm = ({ initialEmail }: GuestUserFormProps) => {
 		initialTouched: { email: true },
 	});
 
-	const {
-		values: { email, createAccount },
-		handleSubmit,
-		handleChange,
-	} = form;
+	const { handleSubmit, handleChange } = form;
 
+	// trigger auto validation on change
 	useCheckoutFormValidationTrigger({
 		scope: "guestUser",
 		form,
 	});
 
-	useEffect(() => {
-		setUserRegistrationDisabled(false);
-	}, [email]);
-
-	useEffect(() => {
-		if (!shouldUserRegister || user || !createAccount || userRegisterDisabled) {
-			return;
-		}
-
-		void handleSubmit();
-	}, [createAccount, handleSubmit, shouldUserRegister, user, userRegisterDisabled]);
-
-	useCheckoutEmailUpdate({ email });
-
-	// since we use debounced submit, set update
-	// state as "loading" right away
 	const onChange: ChangeHandler = async (event) => {
 		handleChange(event);
-
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-		const error = await isValidEmail(event.target.value as string);
-
-		if (!error) {
-			setCheckoutUpdateState("loading");
-		}
+		setCheckoutUpdateState("loading");
 	};
 
-	return { ...form, handleChange: onChange };
+	return { ...form, handleChange: onChange, handleSubmit };
 };
