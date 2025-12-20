@@ -33,7 +33,6 @@ export const useGuestUserForm = ({ initialEmail, onContinueToPayment }: GuestUse
 	const { setSubmitInProgress } = useCheckoutUpdateStateActions();
 	const { errorMessages } = useErrorMessages();
 	const { setCheckoutUpdateState } = useCheckoutUpdateStateChange("checkoutContactUpdate");
-
 	// ✅ Validation schema
 	const validationSchema = object({
 		phone: string().required(errorMessages.required),

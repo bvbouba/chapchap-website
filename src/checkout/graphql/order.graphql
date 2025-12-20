@@ -9,6 +9,11 @@ fragment OrderLineFragment on OrderLine {
 	variant {
 		name
 		attributes(variantSelection: ALL) {
+			attribute {
+					name
+					slug
+					inputType
+				}
 			values {
 				name
 				dateTime

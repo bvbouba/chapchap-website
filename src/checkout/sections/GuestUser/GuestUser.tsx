@@ -151,14 +151,14 @@ export const GuestUser: React.FC<GuestUserProps> = ({
 						}}
 						className={`mt-3 flex w-full items-center justify-center rounded-lg py-3 font-semibold text-white transition ${
 							acceptedTerms && !form.isSubmitting
-								? "bg-[#97D700] hover:bg-green-600"
+								? "bg-secondary hover:bg-secondary-dark"
 								: "cursor-not-allowed bg-gray-400"
 						}`}
 						disabled={!acceptedTerms || form.isSubmitting}
 					>
 						{form.isSubmitting ? (
 							<div className="flex items-center space-x-2">
-								<span>Continuer vers le paiemen</span>
+								<span>Continuer vers le paiement</span>
 								<div className="flex space-x-1">
 									<span className="h-1.5 w-1.5 animate-bounce rounded-full bg-white [animation-delay:-0.3s]" />
 									<span className="h-1.5 w-1.5 animate-bounce rounded-full bg-white [animation-delay:-0.15s]" />

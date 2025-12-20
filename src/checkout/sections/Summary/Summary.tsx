@@ -5,7 +5,6 @@ import { PromoCodeAdd } from "./PromoCodeAdd";
 import { SummaryMoneyRow } from "./SummaryMoneyRow";
 import { SummaryPromoCodeRow } from "./SummaryPromoCodeRow";
 import { SummaryItemMoneyEditableSection } from "./SummaryItemMoneyEditableSection";
-import { ChevronDownIcon } from "@/checkout/ui-kit/icons";
 
 import { getFormattedMoney } from "@/checkout/lib/utils/money";
 import { Divider, Money, Title } from "@/checkout/components";
@@ -47,9 +46,9 @@ export const Summary: FC<SummaryProps> = ({
 			)}
 		>
 			<details open className="group">
-				<summary className="-mb-2 flex cursor-pointer flex-row items-center pt-4">
-					<Title>Summary</Title>
-					<ChevronDownIcon className="mb-2 group-open:rotate-180" />
+				<summary className="-mb-2 flex cursor-pointer flex-row items-center">
+					<Title className="text-xl">Résumé du voyage</Title>
+					{/* <ChevronDownIcon className="mb-2 group-open:rotate-180" /> */}
 				</summary>
 				<ul className="py-2" data-testid="SummaryProductList">
 					{lines.map((line) => (
@@ -57,7 +56,7 @@ export const Summary: FC<SummaryProps> = ({
 							{editable ? (
 								<SummaryItemMoneyEditableSection line={line as CheckoutLineFragment} />
 							) : (
-								<SummaryItemMoneySection line={line as OrderLineFragment} />
+								<SummaryItemMoneySection line={line as CheckoutLineFragment} />
 							)}
 						</SummaryItem>
 					))}
@@ -70,7 +69,7 @@ export const Summary: FC<SummaryProps> = ({
 				</>
 			)}
 			<div className="mt-4 flex max-w-full flex-col">
-				<SummaryMoneyRow label="Subtotal" money={subtotalPrice?.gross} ariaLabel="subtotal price" />
+				{/* <SummaryMoneyRow label="Subtotal" money={subtotalPrice?.gross} ariaLabel="subtotal price" /> */}
 				{voucherCode && (
 					<SummaryPromoCodeRow
 						editable={editable}
@@ -92,14 +91,14 @@ export const Summary: FC<SummaryProps> = ({
 						negative
 					/>
 				))}
-				<SummaryMoneyRow label="Shipping cost" ariaLabel="shipping cost" money={shippingPrice?.gross} />
+				{/* <SummaryMoneyRow label="Shipping cost" ariaLabel="shipping cost" money={shippingPrice?.gross} /> */}
 				<Divider className="my-4" />
 				<div className="flex flex-row items-baseline justify-between pb-4">
 					<div className="flex flex-row items-baseline">
-						<p className="">Total price</p>
-						<p color="secondary" className="ml-2">
+						<p className="">Total du voyage</p>
+						{/* <p color="secondary" className="ml-2">
 							includes {getFormattedMoney(totalPrice?.tax)} tax
-						</p>
+						</p> */}
 					</div>
 					<Money ariaLabel="total price" money={totalPrice?.gross} data-testid="totalOrderPrice" />
 				</div>

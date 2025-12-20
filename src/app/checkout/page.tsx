@@ -21,10 +21,10 @@ export default async function CheckoutPage(props: {
 			<section className="mx-auto flex min-h-dvh max-w-7xl flex-col p-8">
 				<div className="flex items-center font-bold">
 					<Link aria-label="homepage" href="/">
-						ACME
+						ChapChapTickets
 					</Link>
 				</div>
-				<h1 className="mt-8 text-3xl font-bold text-neutral-900">Checkout</h1>
+				<h1 className="mt-8 text-3xl font-bold text-neutral-900">Commande</h1>
 
 				<section className="mb-12 mt-6 flex-1">
 					<RootWrapper saleorApiUrl={process.env.NEXT_PUBLIC_SALEOR_API_URL} />

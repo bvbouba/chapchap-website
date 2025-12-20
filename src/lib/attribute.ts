@@ -1,4 +1,6 @@
 import dayjs from "dayjs";
+import "dayjs/locale/fr";
+dayjs.locale("fr");
 
 // Helper: get attribute value (name or value)
 
@@ -64,7 +66,6 @@ export const formatTimeUTC = (d: Date) =>
 	});
 
 export const getTripInformation = ({ attributes }: { attributes: attributeType[] }) => {
-	console.log(attributes);
 	const durationRaw = getAttrValue(attributes, "estimated-duration");
 	const company = getAttrValue(attributes, "bus-operator");
 	const departureCity = getAttrValue(attributes, "departure-city");
@@ -86,7 +87,6 @@ export const getTripInformation = ({ attributes }: { attributes: attributeType[]
 
 	const departureTimeStr = departureDate ? formatTimeUTC(departureDate) : "— —";
 	const formattedDate = departureDate ? dayjs(departureDate).locale("fr").format("ddd D MMM") : "";
-
 	return {
 		company,
 		departureCity,

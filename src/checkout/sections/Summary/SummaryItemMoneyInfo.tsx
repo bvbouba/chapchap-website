@@ -1,13 +1,19 @@
 import React from "react";
 import clsx from "clsx";
 import { Money } from "@/checkout/components";
-import { type Money as MoneyType } from "@/checkout/graphql";
 import { getFormattedMoney } from "@/checkout/lib/utils/money";
-import { type GrossMoney } from "@/checkout/lib/globalTypes";
+import { MoneyFragment } from "@/gql/graphql";
 
 interface SummaryItemMoneyInfoProps {
-	unitPrice: GrossMoney;
-	undiscountedUnitPrice: MoneyType;
+	unitPrice: {
+        __typename?: "TaxedMoney";
+        gross: {
+            __typename?: "Money";
+            currency: string;
+            amount: number;
+        };
+    };
+	undiscountedUnitPrice: MoneyFragment;
 	quantity: number;
 }
 
@@ -46,8 +52,8 @@ export const SummaryItemMoneyInfo: React.FC<SummaryItemMoneyInfoProps> = ({
 			</div>
 
 			{multiplePieces && (
-				<p aria-label="single piece price" color="secondary" className="text-end text-xs">
-					{getFormattedMoney(piecePrice)} each
+				<p aria-label="single piece price" color="secondary" className="text-end text-[10px]">
+					{getFormattedMoney(piecePrice)} chacun
 				</p>
 			)}
 		</div>

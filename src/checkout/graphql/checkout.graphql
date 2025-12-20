@@ -105,6 +105,7 @@ fragment CheckoutFragment on Checkout {
 	lines {
 		...CheckoutLineFragment
 	}
+	note
 }
 
 fragment CheckoutLineFragment on CheckoutLine {
@@ -126,6 +127,11 @@ fragment CheckoutLineFragment on CheckoutLine {
 	}
 	variant {
 		attributes(variantSelection: ALL) {
+			attribute {
+					name
+					slug
+					inputType
+				}
 			values {
 				name
 				dateTime

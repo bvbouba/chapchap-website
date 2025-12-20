@@ -1,0 +1,15 @@
+schema: "http://127.0.0.1:8000/graphql/"
+documents: "src/checkout/graphql/*.graphql"
+generates:
+  src/checkout/graphql/index.ts:
+    plugins:
+      - "typescript"
+      - "typescript-operations"
+      - "typescript-urql"
+    config:
+      withHooks: true
+      dedupeOperationSuffix: true # <--- UTILISEZ CECI À LA PLACE
+      scalars:
+        DateTime: string
+        JSON: Record<string, any>
+        Decimal: number

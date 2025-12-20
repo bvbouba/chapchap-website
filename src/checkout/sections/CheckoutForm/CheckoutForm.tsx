@@ -17,6 +17,7 @@ import { GuestBillingAddressSection } from "@/checkout/sections/GuestBillingAddr
 import { PaymentSection, PaymentSectionSkeleton } from "@/checkout/sections/PaymentSection";
 import { getQueryParams } from "@/checkout/lib/utils/url";
 import { CollapseSection } from "@/checkout/sections/CheckoutForm/CollapseSection";
+import { Stepper } from "@/ui/components/Stepper";
 
 export const CheckoutForm = () => {
 	const { user } = useUser();
@@ -50,20 +51,7 @@ export const CheckoutForm = () => {
 				)}
 
 				{/* 🟦 Progress Bar */}
-				<div className="flex w-2/3 flex-col sm:w-1/2">
-					<div className="mb-1 flex justify-between text-sm font-medium text-gray-700">
-						<span>
-							Étape {currentStep} sur {totalSteps}
-						</span>
-						<span>{isStep1 ? "Informations & Livraison" : "Paiement"}</span>
-					</div>
-					<div className="h-2 w-full rounded-full bg-gray-200">
-						<div
-							className="h-2 rounded-full bg-blue-600 transition-all duration-300"
-							style={{ width: `${(currentStep / totalSteps) * 100}%` }}
-						/>
-					</div>
-				</div>
+				<Stepper currentStep={currentStep} totalSteps={totalSteps}/>
 			</div>
 
 			{/* 🧾 Step 1 */}
