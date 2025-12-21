@@ -33,7 +33,14 @@ export const Checkout = () => {
 							<CheckoutForm />
 						</Suspense>
 						<Suspense fallback={<SummarySkeleton />}>
-							<Summary {...checkout} editable={false}/>
+							<Summary 
+							     lines={checkout.lines} 
+								 totalPrice={checkout.totalPrice} 
+								 editable={true}
+								 voucherCode={checkout.voucherCode}
+								 giftCards={checkout.giftCards}
+								 shippingPrice={checkout.shippingPrice}
+								 />
 						</Suspense>
 					</div>
 				)}

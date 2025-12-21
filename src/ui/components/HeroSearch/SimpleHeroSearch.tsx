@@ -2,13 +2,10 @@
 
 import { TripSearchData, useTripSearch } from "@/context/TripSearchContext";
 import TripSearchForm, { FormValues } from "./form";
-import { useParams, usePathname } from "next/navigation";
 
 export default function SimpleHeroSearch({ data }: { data?: TripSearchData }) {
   const { setData } = useTripSearch();
-  const params = useParams<{ channel: string }>();
-  const pathname = usePathname(); // ✅ Get current URL path
-  console.log(pathname)
+
 
   const handleSearchSubmit = (values: FormValues & { tripType: "oneway" | "roundtrip" }) => {
     // ✅ Map form values to TripSearchData

@@ -25,7 +25,6 @@ export const SummaryItemMoneyInfo: React.FC<SummaryItemMoneyInfoProps> = ({
 	const multiplePieces = quantity > 1;
 	const piecePrice = unitPrice.gross;
 	const onSale = undiscountedUnitPrice.amount !== unitPrice.gross.amount;
-
 	return (
 		<div className="flex flex-col items-end justify-end">
 			<div className="flex flex-row flex-wrap justify-end gap-x-2">

@@ -6,10 +6,9 @@ interface LineItemQuantitySelectorProps {
 }
 
 export const SummaryItemMoneySection: React.FC<LineItemQuantitySelectorProps> = ({ line }) => {
-	console.log(line)
 	return (
 		<div className="flex flex-col items-end">
-			<SummaryItemMoneyInfo {...line} undiscountedUnitPrice={line.undiscountedUnitPrice} />
+			<SummaryItemMoneyInfo {...line} undiscountedUnitPrice={line.undiscountedUnitPrice.gross} />
 		</div>
 	);
 };

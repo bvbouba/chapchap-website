@@ -9,47 +9,47 @@ import { FormProvider } from "@/checkout/hooks/useForm/FormProvider";
 import { useForm } from "@/checkout/hooks/useForm";
 
 interface PromoCodeFormData {
-	promoCode: string;
+    promoCode: string;
 }
 
 export const PromoCodeAdd: FC<Classes> = ({ className }) => {
-	const [, checkoutAddPromoCode] = useCheckoutAddPromoCodeMutation();
+    const [, checkoutAddPromoCode] = useCheckoutAddPromoCodeMutation();
 
-	const onSubmit = useFormSubmit<PromoCodeFormData, typeof checkoutAddPromoCode>({
-		scope: "checkoutAddPromoCode",
-		onSubmit: checkoutAddPromoCode,
-		parse: ({ promoCode, languageCode, checkoutId }) => ({
-			promoCode,
-			checkoutId,
-			languageCode,
-		}),
-		onSuccess: ({ formHelpers: { resetForm } }) => resetForm(),
-	});
+    const onSubmit = useFormSubmit<PromoCodeFormData, typeof checkoutAddPromoCode>({
+        scope: "checkoutAddPromoCode",
+        onSubmit: checkoutAddPromoCode,
+        parse: ({ promoCode, languageCode, checkoutId }) => ({
+            promoCode,
+            checkoutId,
+            languageCode,
+        }),
+        onSuccess: ({ formHelpers: { resetForm } }) => resetForm(),
+    });
 
-	const form = useForm<PromoCodeFormData>({
-		onSubmit,
-		initialValues: { promoCode: "" },
-	});
-	const {
-		values: { promoCode },
-	} = form;
+    const form = useForm<PromoCodeFormData>({
+        onSubmit,
+        initialValues: { promoCode: "" },
+    });
+    const {
+        values: { promoCode },
+    } = form;
 
-	const showApplyButton = promoCode.length > 0;
+    const showApplyButton = promoCode.length > 0;
 
-	return (
-		<FormProvider form={form}>
-			<div className={clsx("relative my-4", className)}>
-				<TextInput required={false} name="promoCode" label="Add gift card or discount code" />
-				{showApplyButton && (
-					<Button
-						className="absolute bottom-2.5 right-3"
-						variant="tertiary"
-						ariaLabel="apply"
-						label="Apply"
-						type="submit"
-					/>
-				)}
-			</div>
-		</FormProvider>
-	);
+    return (
+        <FormProvider form={form}>
+            <div className={clsx("relative my-4", className)}>
+                <TextInput required={false} name="promoCode" label="Ajouter une carte-cadeau ou un code promo" />
+                {showApplyButton && (
+                    <Button
+                        className="absolute bottom-2.5 right-3"
+                        variant="tertiary"
+                        ariaLabel="appliquer"
+                        label="Appliquer"
+                        type="submit"
+                    />
+                )}
+            </div>
+        </FormProvider>
+    );
 };

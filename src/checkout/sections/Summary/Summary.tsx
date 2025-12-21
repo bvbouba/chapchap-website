@@ -2,40 +2,64 @@ import { type FC } from "react";
 import clsx from "clsx";
 import { SummaryItem, type SummaryLine } from "./SummaryItem";
 import { PromoCodeAdd } from "./PromoCodeAdd";
-import { SummaryMoneyRow } from "./SummaryMoneyRow";
 import { SummaryPromoCodeRow } from "./SummaryPromoCodeRow";
 import { SummaryItemMoneyEditableSection } from "./SummaryItemMoneyEditableSection";
 
-import { getFormattedMoney } from "@/checkout/lib/utils/money";
 import { Divider, Money, Title } from "@/checkout/components";
 import {
+	OrderLineFragment,
 	type CheckoutLineFragment,
 	type GiftCardFragment,
-	type Money as MoneyType,
-	type OrderLineFragment,
 } from "@/checkout/graphql";
 import { SummaryItemMoneySection } from "@/checkout/sections/Summary/SummaryItemMoneySection";
-import { type GrossMoney, type GrossMoneyWithTax } from "@/checkout/lib/globalTypes";
 
 interface SummaryProps {
 	editable?: boolean;
 	lines: SummaryLine[];
-	totalPrice?: GrossMoneyWithTax;
-	subtotalPrice?: GrossMoney;
+	totalPrice?: {
+		__typename?: "TaxedMoney";
+		gross: {
+			__typename?: "Money";
+			currency: string;
+			amount: number;
+		};
+		tax: {
+			__typename?: "Money";
+			currency: string;
+			amount: number;
+		};
+	},
+	subtotalPrice?: {
+			__typename?: "TaxedMoney";
+			gross: {
+				__typename?: "Money";
+				currency: string;
+				amount: number;
+			};
+	}
 	giftCards?: GiftCardFragment[];
 	voucherCode?: string | null;
-	discount?: MoneyType | null;
-	shippingPrice: GrossMoney;
+	discount?: {
+		__typename?: "Money";
+		currency: string;
+		amount: number;
+	} | undefined;
+	shippingPrice: {
+		__typename?: "TaxedMoney";
+		gross: {
+			__typename?: "Money";
+			currency: string;
+			amount: number;
+		};
+	}
 }
 
 export const Summary: FC<SummaryProps> = ({
 	editable = true,
 	lines,
 	totalPrice,
-	subtotalPrice,
 	giftCards = [],
 	voucherCode,
-	shippingPrice,
 	discount,
 }) => {
 	return (
@@ -56,7 +80,7 @@ export const Summary: FC<SummaryProps> = ({
 							{editable ? (
 								<SummaryItemMoneyEditableSection line={line as CheckoutLineFragment} />
 							) : (
-								<SummaryItemMoneySection line={line as CheckoutLineFragment} />
+								<SummaryItemMoneySection line={line as OrderLineFragment} />
 							)}
 						</SummaryItem>
 					))}

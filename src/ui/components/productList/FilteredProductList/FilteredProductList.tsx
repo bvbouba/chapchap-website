@@ -21,7 +21,6 @@ import {
 import { ProductCollection } from "../../ProductCollection";
 import { useTripSearch } from "@/context/TripSearchContext";
 import SimpleHeroSearch from "../../HeroSearch/SimpleHeroSearch";
-import TripHeader from "../../trips/TripHeader";
 import UpcomingTripsSection from "../../trips/UpcomingTripsSection";
 import SectionFilter from "../../trips/SectionFilter";
 import dayjs from "dayjs";

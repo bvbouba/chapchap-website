@@ -37,7 +37,6 @@ export const usePaymentGatewaysInitialize = () => {
 				}),
 				onSuccess: ({ data }) => {
 					const parsedConfigs = (data.gatewayConfigs || []) as ParsedPaymentGateways;
-
 					if (!parsedConfigs.length) {
 						throw new Error("No available payment gateways");
 					}
