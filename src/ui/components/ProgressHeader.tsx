@@ -30,7 +30,6 @@ export default function ProgressHeader({ destinationName, date, checkout }: Prop
 	const pathname = usePathname();
 	const currentStep = getCurrentStepFromPath(pathname);
 	const { data } = useTripSearch();
-	const params = useParams<{ channel: string }>();
 
 	const attributes = checkout?.lines[0].variant.attributes || [];
 

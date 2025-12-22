@@ -45,10 +45,9 @@ export default function UpcomingTripsSection({
 
 	// ✅ Show today + next 6 days
 	const upcomingDays = Array.from({ length: 7 }, (_, i) => today.add(i, "day"));
-
 	// ✅ Create readable title
 	const title = busOperatorName
-		? `Horaires des bus ${busOperatorName} : ${originName} → ${destinationName}`
+		? `Horaires des bus ${busOperatorName.toUpperCase()} : ${originName} → ${destinationName}`
 		: `Horaires des bus ${originName} → ${destinationName}`;
 
 	return (

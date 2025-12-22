@@ -67,7 +67,7 @@ export default async function Page(props: { params: Promise<{ slug: string; chan
       destinationData={destinationData}
       busOperator={busOperator}
       categoryIDs={[category.id]}
-      busOperatorName={category.name}
+      busOperatorName={busOperator}
     />
   );
 }
