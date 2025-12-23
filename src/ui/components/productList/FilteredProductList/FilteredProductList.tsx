@@ -25,6 +25,7 @@ import UpcomingTripsSection from "../../trips/UpcomingTripsSection";
 import SectionFilter from "../../trips/SectionFilter";
 import dayjs from "dayjs";
 import ProgressHeader from "../../ProgressHeader";
+import { citiesType } from "../../HeroSearch/HeroSearch";
 
 export interface FilteredProductListProps {
 	attributeFiltersData: AttributeFilterFragment[];
@@ -34,6 +35,7 @@ export interface FilteredProductListProps {
 	destinationData: AssignedAttributeValueFragment | null | undefined;
 	busOperator?: string;
 	busOperatorName?: string;
+	cities : citiesType
 }
 
 export interface Filters {
@@ -53,6 +55,7 @@ export function FilteredProductList({
 	destinationData,
 	busOperator,
 	busOperatorName,
+	cities
 }: FilteredProductListProps) {
 	const [queryFilters, setQueryFilters] = useQueryState("filters", {
 		parse: parseQueryAttributeFilters,
@@ -188,7 +191,7 @@ export function FilteredProductList({
 	const displayUpcomingTrip = !!categoryIDs?.length;
 	return (
 		<>
-			<SimpleHeroSearch data={data} />
+			<SimpleHeroSearch data={data} cities={cities}/>
 
 			{displayUpcomingTrip ? (
 				<UpcomingTripsSection

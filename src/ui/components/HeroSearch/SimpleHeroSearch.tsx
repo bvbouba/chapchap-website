@@ -3,8 +3,9 @@
 import { TripSearchData, useTripSearch } from "@/context/TripSearchContext";
 import TripSearchForm, { FormValues } from "./form";
 import { useParams, useRouter } from "next/navigation";
+import { citiesType } from "./HeroSearch";
 
-export default function SimpleHeroSearch({ data }: { data?: TripSearchData }) {
+export default function SimpleHeroSearch({ data,cities }: { data?: TripSearchData, 	cities : citiesType}) {
   const { setData } = useTripSearch();
   const router = useRouter(); // Initialize router
   const params = useParams(); // Get current channel from URL
@@ -65,7 +66,7 @@ export default function SimpleHeroSearch({ data }: { data?: TripSearchData }) {
     <section className="relative border-y border-gray-300">
       <div className="relative flex items-center justify-center">
         <div className="bg-white text-[#44474a] p-8 rounded-2xl w-full max-w-6xl mx-4">
-          <TripSearchForm onSubmit={handleSearchSubmit} data={data} />
+          <TripSearchForm onSubmit={handleSearchSubmit} data={data} cities={cities}/>
         </div>
       </div>
     </section>

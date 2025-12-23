@@ -8,6 +8,7 @@ import * as Yup from "yup";
 import { TripSearchData, useTripSearch } from "@/context/TripSearchContext";
 import { TripSearchFormSkeleton } from "./skeleton";
 import { useProgress } from "@/context/ProgressContext";
+import { citiesType } from "./HeroSearch";
 
 export type FormValues = {
 	origin: {
@@ -28,19 +29,18 @@ interface TripSearchFormProps {
 	onSubmit: (values: FormValues & { tripType: "oneway" | "roundtrip" }) => void;
 	initialTripType?: "oneway" | "roundtrip";
 	data?: TripSearchData | null;
+	cities : citiesType
 }
 
-export default function TripSearchForm({ onSubmit, data, initialTripType = "oneway" }: TripSearchFormProps) {
+export default function TripSearchForm({ onSubmit, data, initialTripType = "oneway",cities }: TripSearchFormProps) {
 	const [tripType, setTripType] = useState<"oneway" | "roundtrip">(initialTripType);
-	const [departureCities, setDepartureCities] = useState<AssignedAttributeValueFragment[]>([]);
-	const [arrivalCities, setArrivalCities] = useState<AssignedAttributeValueFragment[]>([]);
+    const {departureCities, arrivalCities} = cities
 	const [originSuggestions, setOriginSuggestions] = useState<AssignedAttributeValueFragment[]>([]);
 	const [destinationSuggestions, setDestinationSuggestions] = useState<AssignedAttributeValueFragment[]>([]);
 	const [showOriginSuggestions, setShowOriginSuggestions] = useState(false);
 	const [showDestinationSuggestions, setShowDestinationSuggestions] = useState(false);
 	const [originDisplay, setOriginDisplay] = useState("");
 	const [destinationDisplay, setDestinationDisplay] = useState("");
-	const [loading, setLoading] = useState(true);
 	const [originSlug, setOriginSlug] = useState("");
 	const [destinationSlug, setDestinationSlug] = useState("");
 
@@ -50,29 +50,6 @@ export default function TripSearchForm({ onSubmit, data, initialTripType = "onew
 	const { setData } = useTripSearch();
 	const { setStep } = useProgress();
 
-	// ✅ Load all cities
-	useEffect(() => {
-		const fetchAllCities = async () => {
-			try {
-				setLoading(true); // start loading
-				const [departureRes, arrivalRes] = await Promise.all([
-					fetch("/api/search-cities?type=departure"),
-					fetch("/api/search-cities?type=arrival"),
-				]);
-
-				const depData = (await departureRes.json()) as { results: AssignedAttributeValueFragment[] };
-				const arrData = (await arrivalRes.json()) as { results: AssignedAttributeValueFragment[] };
-
-				setDepartureCities(depData.results);
-				setArrivalCities(arrData.results);
-			} catch (error) {
-				console.error("Failed to fetch cities:", error);
-			} finally {
-				setLoading(false); // end loading
-			}
-		};
-		fetchAllCities();
-	}, []);
 
 	// ✅ Close suggestions when clicking outside
 	useEffect(() => {
@@ -210,9 +187,9 @@ export default function TripSearchForm({ onSubmit, data, initialTripType = "onew
 	};
 
 	// ✅ Show skeleton while loading
-	if (loading) {
-		return <TripSearchFormSkeleton />;
-	}
+	// if (loading) {
+	// 	return <TripSearchFormSkeleton />;
+	// }
 
 	return (
 		<>

@@ -3,8 +3,17 @@
 import { useParams, useRouter } from "next/navigation";
 import TripSearchForm, { FormValues } from "./form";
 import { useTripSearch } from "@/context/TripSearchContext";
+import { AssignedAttributeValueFragment } from "@/gql/graphql";
 
-export default function HeroSearch() {
+export type citiesType = {
+	departureCities: AssignedAttributeValueFragment[];
+    arrivalCities: AssignedAttributeValueFragment[];
+}
+interface props {
+	cities : citiesType
+}
+
+export default function HeroSearch({cities}:props) {
 	const router = useRouter();
 	const params = useParams<{ channel: string }>();
 	const { data } = useTripSearch();
@@ -31,7 +40,7 @@ export default function HeroSearch() {
 					</p>
 
 					{/* ✅ Reusable trip form */}
-					<TripSearchForm onSubmit={handleSearchSubmit} data={data} />
+					<TripSearchForm onSubmit={handleSearchSubmit} data={data} cities={cities}/>
 				</div>
 			</div>
 		</section>

@@ -1,3 +1,4 @@
+import { getAllCities } from "@/actions";
 import {
 	GetAttributeValueByIdDocument,
   } from "@/gql/graphql";
@@ -19,7 +20,8 @@ import { getTransformedAttributes } from "@/lib/transformAttributes";
   
   export default async function Page(props: { params: Promise<PageParams> }) {
 	const { origin, destination } = await props.params;
-  
+    const cities = await getAllCities();
+	
 	// ✅ Fetch both origin & destination in parallel
 	const [originRes, destinationRes ] = await Promise.all([
 	  executeGraphQL(GetAttributeValueByIdDocument, {
@@ -46,6 +48,7 @@ import { getTransformedAttributes } from "@/lib/transformAttributes";
 		attributeFiltersData={attributes}
 		originData={originData}
 		destinationData={destinationData}
+		cities={cities}
 	  />
 	);
   }

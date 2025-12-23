@@ -17,7 +17,7 @@ export function UserMenu({ user }: Props) {
 	return (
 		<Menu as="div" className="relative">
 			<Menu.Button className="relative flex rounded-full bg-neutral-200 text-sm focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-neutral-800">
-				<span className="sr-only">Open user menu</span>
+				<span className="sr-only">Ouvrir le menu utilisateur</span>
 				<UserAvatar user={user} />
 			</Menu.Button>
 			<Transition
@@ -38,10 +38,10 @@ export function UserMenu({ user }: Props) {
 									href="/orders"
 									className={clsx(
 										active && "bg-neutral-100",
-										"block px-4 py-2 text-sm   text-neutral-500 hover:text-neutral-700",
+										"block px-4 py-2 text-sm text-neutral-500 hover:text-neutral-700",
 									)}
 								>
-									My orders
+									Mes Voyages
 								</LinkWithChannel>
 							)}
 						</Menu.Item>
@@ -54,10 +54,10 @@ export function UserMenu({ user }: Props) {
 										type="submit"
 										className={clsx(
 											active && "bg-neutral-100",
-											"block px-4 py-2 text-start text-sm   text-neutral-500 hover:text-neutral-700",
+											"block w-full px-4 py-2 text-start text-sm text-neutral-500 hover:text-neutral-700",
 										)}
 									>
-										Log Out
+										Déconnexion
 									</button>
 								</form>
 							)}
