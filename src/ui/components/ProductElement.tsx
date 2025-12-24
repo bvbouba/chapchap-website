@@ -10,6 +10,7 @@ import { useGlobalLoading } from "@/context/GlobalLoadingContext";
 import { useTripSearch } from "@/context/TripSearchContext";
 import { useProgress } from "@/context/ProgressContext";
 import { Arrow, BusIcon } from "./Svg";
+import { useTransition } from "react";
 
 export function ProductElement({
 	variant,
@@ -25,37 +26,48 @@ export function ProductElement({
 	const { setLoading } = useGlobalLoading();
 	const { setData, data } = useTripSearch();
 	const { setStep } = useProgress();
-
+	const [isPending, startTransition] = useTransition();
+	
 	const handleAddToCart = async () => {
-		try {
-			setLoading(true);
-			const res = await addToCartAction({
-				channel: params.channel,
-				variantId: variant.id,
-			});
-			if (data?.tripType === "oneway") {
-				setStep("summary");
-				router.push(`/${params.channel}/cart`);
-			} else if (data?.tripType === "roundtrip" && res?.checkout?.lines.length === 1) {
-				setData({
-					...data,
-					query: {
-						origin: data.destination.slug,
-						destination: data.origin.slug,
-						date: data.returnDate ?? "",
-					},
-				});
-				setStep("return");
-			} else if (data?.tripType === "roundtrip" && res?.checkout?.lines.length === 2) {
-				setStep("summary");
-				router.push(`/${params.channel}/cart`);
-			}
-		} catch (error) {
-			console.error("Erreur lors de l’ajout au panier :", error);
-		} finally {
-			setLoading(false);
-		}
-	};
+        try {
+			// 1. Show the Global Overlay immediately
+			setLoading(true, variant.product.thumbnail ?? undefined);
+            // We keep your global loading if you want, but isPending is better for the button
+            const res = await addToCartAction({
+                channel: params.channel,
+                variantId: variant.id,
+            });
+
+            // 3. Wrap all state/navigation logic in startTransition
+            startTransition(() => {
+                if (data?.tripType === "oneway") {
+                    setStep("summary");
+                    router.push(`/${params.channel}/cart`);
+                } else if (data?.tripType === "roundtrip" && res?.checkout?.lines.length === 1) {
+                    setData({
+                        ...data,
+                        query: {
+                            origin: data.destination.slug,
+                            destination: data.origin.slug,
+                            date: data.returnDate ?? "",
+                        },
+                    });
+                    setStep("return");
+					// Turn off overlay ONLY if staying on the same page
+					setLoading(false);
+                    // Note: If you stay on the page, isPending will end after state updates
+                } else if (data?.tripType === "roundtrip" && res?.checkout?.lines.length === 2) {
+                    setStep("summary");
+                    router.push(`/${params.channel}/cart`);
+                }
+            });
+        } catch (error) {
+			console.error("Erreur:", error);
+            setLoading(false); // Hide on error
+        }
+		// Note: We DON'T setLoading(false) in 'finally' if we are navigating,
+        // because the new page will unmount this component anyway.
+    };
 
 	// Helper: get attribute value (name or value)
 	const getAttrValue = (attrs: typeof attributes, slug: string): string | undefined => {
@@ -175,7 +187,7 @@ export function ProductElement({
 							variant?.pricing?.price?.gross.currency ?? "",
 						)}
 					</div>
-					<AddButton disabled={!variant?.quantityAvailable} addItem={handleAddToCart} />
+					<AddButton disabled={!variant?.quantityAvailable} addItem={handleAddToCart} isNavigating={isPending}/>
 				</div>
 			</div>
 		</div>

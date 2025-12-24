@@ -22,6 +22,7 @@ export async function getTransformedAttributes({
 		executeGraphQL(FilteringAttributesQueryDocument, {
 			variables: { channel, filter: { filterableInStorefront: true } },
 			revalidate: 60,
+			withAuth:false
 		}),
 	]);
 

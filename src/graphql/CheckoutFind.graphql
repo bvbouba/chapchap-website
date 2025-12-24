@@ -11,6 +11,7 @@ fragment Checkout on Checkout {
 			}
 		}
 		variant {
+			quantityAvailable
 			product {
 				id
 				name

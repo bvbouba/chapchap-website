@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import "dayjs/locale/fr";
 import { ChevronDown, ChevronUp, Plus, Minus } from "lucide-react";
 import { formatMoney } from "@/lib/utils";
@@ -10,6 +10,7 @@ import { ProductImageWrapper } from "@/ui/atoms/ProductImageWrapper";
 import { CheckoutLink } from "@/app/[channel]/(main)/cart/CheckoutLink";
 import { updateLineFromCheckout } from "@/actions/";
 import { Arrow, BusIcon } from "../Svg";
+import { useAvailability } from "@/context/AvailabilityGuardContext";
 
 interface CartProps {
 	checkout: CheckoutFragment;
@@ -29,6 +30,9 @@ export default function CartDetail({ checkout }: CartProps) {
 	const variant = departLine?.variant;
 	const attributes = variant?.attributes || [];
 
+	const { checkAvailability } = useAvailability();
+
+
 	const {
 		departureCity,
 		departureStation,
@@ -44,6 +48,13 @@ export default function CartDetail({ checkout }: CartProps) {
 	const amount = price?.amount || 0;
 	const currency = price?.currency || "";
 
+
+	useEffect(() => {
+		if (checkout) {
+			checkAvailability(checkout);
+		}
+	}, [checkout, checkAvailability]);
+	
 	const handleQuantityUpdate = async (newQty: number) => {
 		if (!variant?.id || !checkout?.id) return;
 

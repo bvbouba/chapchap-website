@@ -1,53 +1,99 @@
 "use client";
-import { createContext, useContext, useState, ReactNode } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
+import { createContext, useContext, useState, ReactNode, useEffect } from "react";
+import Image from "next/image";
+
+type imageType = {
+    url: string;
+    alt?: string | null;
+}
+
+interface LoadingState {
+    active: boolean;
+    companyLogo?: imageType; // ✅ Updated to use your type
+}
 
 interface GlobalLoadingContextType {
-	isLoading: boolean;
-	setLoading: (v: boolean) => void;
+    isLoading: boolean;
+    loadingState: LoadingState;
+    setLoading: (active: boolean, companyLogo?: imageType) => void;
 }
 
 const GlobalLoadingContext = createContext<GlobalLoadingContextType>({
-	isLoading: false,
-	setLoading: () => {},
+    isLoading: false,
+    loadingState: { active: false },
+    setLoading: () => {},
 });
 
 export const useGlobalLoading = () => useContext(GlobalLoadingContext);
 
-interface GlobalLoadingProviderProps {
-	children: ReactNode;
-}
+export function GlobalLoadingProvider({ children }: { children: ReactNode }) {
+    const [loadingState, setLoadingState] = useState<LoadingState>({ active: false });
+    const pathname = usePathname();
+    const searchParams = useSearchParams();
 
-export function GlobalLoadingProvider({ children }: GlobalLoadingProviderProps) {
-	const [isLoading, setLoading] = useState(false);
+    const setLoading = (active: boolean, companyLogo?: imageType) => {
+        setLoadingState({ active, companyLogo });
+    };
 
-	return (
-		<GlobalLoadingContext.Provider value={{ isLoading, setLoading }}>
-			{/* 🔄 Overlay */}
-			{isLoading && (
-				<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-					<div className="flex flex-col items-center rounded-xl bg-white px-6 py-4 shadow-lg">
-						<svg
-							className="mb-3 h-8 w-8 animate-spin text-primary"
-							xmlns="http://www.w3.org/2000/svg"
-							fill="none"
-							viewBox="0 0 24 24"
-						>
-							<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-							<path
-								className="opacity-75"
-								fill="currentColor"
-								d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 
-                   0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 
-                   3.042 1.135 5.824 3 7.938l3-2.647z"
-							/>
-						</svg>
-						<p className="text-sm text-gray-800">Connexion avec notre partenaire…</p>
-					</div>
-				</div>
-			)}
+    useEffect(() => {
+        setLoading(false);
+    }, [pathname, searchParams]);
 
-			{/* Render children below overlay */}
-			{children}
-		</GlobalLoadingContext.Provider>
-	);
+    return (
+        <GlobalLoadingContext.Provider value={{ isLoading: loadingState.active, loadingState, setLoading }}>
+            {loadingState.active && (
+                <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+                    <div className="flex flex-col items-center rounded-2xl bg-white p-8 shadow-2xl max-w-sm w-full mx-4">
+                        
+                        {/* --- Animation Section --- */}
+                        <div className="flex items-center justify-between w-full mb-8 px-2">
+                            {/* Your Brand Logo */}
+                            <div className="relative flex h-24 w-24 items-center justify-center rounded-full border-2 border-gray-100 bg-white p-2 shadow-sm">
+                                <Image 
+                                    src="/logo.png" 
+                                    alt="ChapChap Tickets" 
+                                    width={48} 
+                                    height={48} 
+                                    className="object-contain" 
+                                />
+                            </div>
+
+                            {/* Animated Connection Dots */}
+                            <div className="flex flex-1 items-center justify-center gap-2">
+                                <span className="h-2 w-2 animate-bounce rounded-full bg-primary [animation-delay:-0.3s]" />
+                                <span className="h-2 w-2 animate-bounce rounded-full bg-primary [animation-delay:-0.15s]" />
+                                <span className="h-2 w-2 animate-bounce rounded-full bg-primary" />
+                            </div>
+
+                            {/* Partner Logo */}
+                            <div className="relative flex h-24 w-24 items-center justify-center rounded-full border-2 border-gray-100 bg-gray-50 p-2 shadow-sm">
+                                {loadingState.companyLogo?.url ? (
+                                    <Image 
+                                        src={loadingState.companyLogo.url} 
+                                        alt={loadingState.companyLogo.alt ?? "Partenaire"} 
+                                        fill
+                                        className="object-contain p-2" 
+                                    />
+                                ) : (
+                                    <div className="h-8 w-8 animate-pulse text-gray-300">
+                                        <svg fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/></svg>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Text Feedback */}
+                        <div className="text-center">
+                            <p className="text-base font-bold text-gray-900">Vérification des places</p>
+                            <p className="mt-2 text-sm text-gray-500">
+                                Nous sécurisons votre trajet auprès de notre partenaire...
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {children}
+        </GlobalLoadingContext.Provider>
+    );
 }

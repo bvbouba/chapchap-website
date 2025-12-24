@@ -9,6 +9,7 @@ import { TripSearchData, useTripSearch } from "@/context/TripSearchContext";
 import { TripSearchFormSkeleton } from "./skeleton";
 import { useProgress } from "@/context/ProgressContext";
 import { citiesType } from "./HeroSearch";
+import { useSessionTimer } from "@/context/SessionTimerContext";
 
 export type FormValues = {
 	origin: {
@@ -29,12 +30,13 @@ interface TripSearchFormProps {
 	onSubmit: (values: FormValues & { tripType: "oneway" | "roundtrip" }) => void;
 	initialTripType?: "oneway" | "roundtrip";
 	data?: TripSearchData | null;
-	cities : citiesType
+	cities: citiesType;
+	isPending?: boolean;
 }
 
-export default function TripSearchForm({ onSubmit, data, initialTripType = "oneway",cities }: TripSearchFormProps) {
+export default function TripSearchForm({ onSubmit, data, initialTripType = "oneway", cities,isPending }: TripSearchFormProps) {
 	const [tripType, setTripType] = useState<"oneway" | "roundtrip">(initialTripType);
-    const {departureCities, arrivalCities} = cities
+	const { departureCities, arrivalCities } = cities
 	const [originSuggestions, setOriginSuggestions] = useState<AssignedAttributeValueFragment[]>([]);
 	const [destinationSuggestions, setDestinationSuggestions] = useState<AssignedAttributeValueFragment[]>([]);
 	const [showOriginSuggestions, setShowOriginSuggestions] = useState(false);
@@ -47,8 +49,7 @@ export default function TripSearchForm({ onSubmit, data, initialTripType = "onew
 	const originRef = useRef<HTMLDivElement>(null);
 	const destinationRef = useRef<HTMLDivElement>(null);
 	const today = new Date().toISOString().split("T")[0];
-	const { setData } = useTripSearch();
-	const { setStep } = useProgress();
+	const { resetTimer } = useSessionTimer();
 
 
 	// ✅ Close suggestions when clicking outside
@@ -85,38 +86,39 @@ export default function TripSearchForm({ onSubmit, data, initialTripType = "onew
 				then: (schema) => schema.required("Veuillez sélectionner une date"),
 			}),
 		}),
-		onSubmit: (values) => {
-			const payload = {
-				...values,
-				tripType,
-				origin: {
-					id: values.origin,
-					name: originDisplay,
-					slug: originSlug,
-				},
-				destination: {
-					id: values.destination,
-					name: destinationDisplay,
-					slug: destinationSlug,
-				},
-			};
-
-			if (onSubmit) {
-				setData({
-					...payload,
-					query: {
-						origin: values.origin,
-						destination: values.destination,
-						date: values.date,
-					},
-				});
-				setStep("depart");
-				onSubmit(payload);
-			} else {
-				console.log(payload);
+		onSubmit: async (values, { setSubmitting }) => {
+			console.log("✅ Submit triggered!");
+			// The spinner starts because isSubmitting becomes true automatically
+			
+			try {
+				const payload = {
+					...values,
+					tripType,
+					origin: { id: values.origin, name: originDisplay, slug: originSlug },
+					destination: { id: values.destination, name: destinationDisplay, slug: destinationSlug },
+				};
+		
+				// We MUST await this so isSubmitting stays true
+				if (onSubmit) {
+					await onSubmit(payload); 
+				}
+			} catch (error) {
+				console.error(error);
+			} finally {
+				// If we are still on the same page, turn off the spinner
+				resetTimer()
+				setSubmitting(false);
 			}
 		},
 	});
+
+
+	// add this useEffect to debug:
+useEffect(() => {
+    if (Object.keys(formik.errors).length > 0 && formik.submitCount > 0) {
+        console.log("Validation Errors:", formik.errors);
+    }
+}, [formik.errors, formik.submitCount]);
 
 	// ✅ Suggestions filtering
 	useEffect(() => {
@@ -225,11 +227,10 @@ export default function TripSearchForm({ onSubmit, data, initialTripType = "onew
 			{/* Form */}
 			<form
 				onSubmit={formik.handleSubmit}
-				className={`grid w-full items-start gap-3 sm:gap-4 ${
-					tripType === "roundtrip"
+				className={`grid w-full items-start gap-3 sm:gap-4 ${tripType === "roundtrip"
 						? "md:grid-cols-[repeat(24,_minmax(0,_1fr))]"
 						: "md:grid-cols-[repeat(19,_minmax(0,_1fr))]"
-				}`}
+					}`}
 			>
 				{/* Origin */}
 				<div ref={originRef} className="relative col-span-1 md:col-span-5">
@@ -335,9 +336,8 @@ export default function TripSearchForm({ onSubmit, data, initialTripType = "onew
 							value={formik.values.date}
 							min={today}
 							onChange={formik.handleChange}
-							className={`py-2 pl-10 pr-4 text-sm ${
-								tripType === "roundtrip" ? "rounded-l-md" : "rounded-md"
-							} "bg-white w-full cursor-pointer appearance-none border border-gray-300 text-gray-800 focus:border-gray-400 focus:ring-gray-400 [&::-webkit-calendar-picker-indicator]:hidden`}
+							className={`py-2 pl-10 pr-4 text-sm ${tripType === "roundtrip" ? "rounded-l-md" : "rounded-md"
+								} "bg-white w-full cursor-pointer appearance-none border border-gray-300 text-gray-800 focus:border-gray-400 focus:ring-gray-400 [&::-webkit-calendar-picker-indicator]:hidden`}
 						/>
 						{formik.touched.date && formik.errors.date && (
 							<p className="mt-1 text-xs text-red-500">{formik.errors.date}</p>
@@ -393,11 +393,21 @@ export default function TripSearchForm({ onSubmit, data, initialTripType = "onew
 				<div className="col-span-1 flex justify-center md:col-span-3">
 					<button
 						type="submit"
-						className="w-full rounded-md bg-secondary px-3 py-2 text-sm font-semibold uppercase tracking-widest text-white transition hover:bg-secondary-dark
-            md:w-auto
-            "
+						disabled={formik.isSubmitting || isPending} // ✅ Prevent double clicks
+						className="w-full rounded-md bg-secondary px-3 py-2 text-sm font-semibold uppercase tracking-widest text-white transition hover:bg-secondary-dark md:w-auto disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
 					>
-						Rechercher
+						{(formik.isSubmitting || isPending) ? (
+							<>
+								{/* Simple SVG Spinner */}
+								<svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+									<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+									<path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+								</svg>
+								Recherche...
+							</>
+						) : (
+							"Rechercher"
+						)}
 					</button>
 				</div>
 			</form>
