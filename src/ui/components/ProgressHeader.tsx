@@ -4,10 +4,13 @@ import { ChevronRight, CheckIcon } from "lucide-react";
 import { useParams, usePathname } from "next/navigation";
 import { useTripSearch } from "@/context/TripSearchContext";
 import Link from "next/link";
+import { CheckoutFragment } from "@/gql/graphql";
+import { extractAttributesFromCHeckout, getAtrrValueID } from "@/lib/attribute";
 
 interface Props {
     destinationName?: string;
     date?: string;
+    checkout?:CheckoutFragment;
 }
 
 type StepKey = "depart" | "return" | "summary" | "checkout";
@@ -20,36 +23,34 @@ function getCurrentStepFromPath(pathname: string): StepKey {
     return "depart";
 }
 
-export default function ProgressHeader({ destinationName, date }: Props) {
+export default function ProgressHeader({ destinationName, date,checkout }: Props) {
     const pathname = usePathname();
     const currentStep = getCurrentStepFromPath(pathname);
     const { data } = useTripSearch();
     const params = useParams<{ channel: string }>();
-
     const getStepHref = (stepKey: string): string => {
-        const channel = params.channel || "ci";
-        
-        // 🚩 Robust check for missing context or missing IDs
-        const originId = data?.origin?.id;
-        const destinationId = data?.destination?.id;
-    
-        // If IDs are missing, empty strings, or null/undefined
-        if (!originId || !destinationId) {
-            return `/${channel}`; 
-        }
-    
-        switch (stepKey) {
-            case "depart":
-                return `/${channel}/trips/${originId}/${destinationId}`;
-            case "return":
-                // For the return trip, we swap origin and destination IDs
-                return `/${channel}/return/${destinationId}/${originId}`;
-            case "summary":
-                return `/${channel}/cart`;
-            default:
-                return `/${channel}`;
-        }
-    };
+    const channel = params.channel || "ci";
+
+    // 🛠️ Extract attributes from the saved checkout data
+    const {originId, destinationId,date} =extractAttributesFromCHeckout(checkout)
+
+    // If IDs are missing, empty strings, or null/undefined
+    if (!originId || !destinationId || !date) {
+        return `/${channel}`; 
+    }
+
+    switch (stepKey) {
+        case "depart":
+            return `/${channel}/trips/${originId}/${destinationId}?date=${date}`;
+        case "return":
+            // For the return trip, we swap origin and destination IDs
+            return `/${channel}/return/${destinationId}/${originId}`;
+        case "summary":
+            return `/${channel}/cart`;
+        default:
+            return `/${channel}`;
+    }
+};
 
     const formattedDate = date
         ? new Date(`${date}T00:00:00Z`).toLocaleDateString("fr-FR", {

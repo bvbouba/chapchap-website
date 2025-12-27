@@ -56,7 +56,7 @@ export function SessionTimerProvider({ children }: { children: ReactNode }) {
             
             {/* 🛑 Full Screen Expiration Overlay */}
             {isActiveRoute && isExpired && (
-                <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/70 backdrop-blur-md">
+                <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/40 backdrop-blur-[2px]">
                     <div className="flex flex-col items-center rounded-2xl bg-white p-10 shadow-2xl max-w-sm w-full mx-4 text-center">
                         
         

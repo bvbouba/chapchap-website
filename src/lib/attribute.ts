@@ -1,30 +1,21 @@
+import { CheckoutFragment, SelectedAttributeFragment } from "@/gql/graphql";
 import dayjs from "dayjs";
 import "dayjs/locale/fr";
 dayjs.locale("fr");
 
 // Helper: get attribute value (name or value)
 
-interface attributeType {
-	__typename?: "SelectedAttribute";
-	attribute: {
-		__typename?: "Attribute";
-		name?: string | null;
-		slug?: string | null;
-	};
-	values: Array<{
-		__typename?: "AttributeValue";
-		name?: string | null;
-		dateTime?: string | null;
-		boolean?: boolean | null;
-		value?: string | null;
-		translation?: { __typename?: "AttributeValueTranslation"; name: string } | null;
-	}>;
-}
 
-export const getAttrValue = (attrs: attributeType[], slug: string): string | undefined => {
+export const getAttrValue = (attrs: SelectedAttributeFragment[], slug: string): string | undefined => {
 	const found = attrs.find((attr) => attr.attribute?.slug === slug);
 	return found?.values?.[0]?.name ?? found?.values?.[0]?.value ?? undefined;
 };
+
+export const getAtrrValueID = (attrs: SelectedAttributeFragment[], slug: string): string | undefined => {
+	const found = attrs.find((attr) => attr.attribute?.slug === slug);
+	return found?.values?.[0]?.id  ?? undefined;
+};
+
 
 // Parse duration string into total minutes
 export const parseDurationToMinutes = (raw?: string): number => {
@@ -65,7 +56,7 @@ export const formatTimeUTC = (d: Date) =>
 		hour12: false,
 	});
 
-export const getTripInformation = ({ attributes }: { attributes: attributeType[] }) => {
+export const getTripInformation = ({ attributes }: { attributes: SelectedAttributeFragment[] }) => {
 	const durationRaw = getAttrValue(attributes, "estimated-duration");
 	const company = getAttrValue(attributes, "bus-operator");
 	const departureCity = getAttrValue(attributes, "departure-city");
@@ -99,3 +90,19 @@ export const getTripInformation = ({ attributes }: { attributes: attributeType[]
 		arrivalTimeStr,
 	};
 };
+
+export const extractAttributesFromCHeckout =(checkout:CheckoutFragment | null | undefined)=>{
+
+	const attributes = checkout?.lines[0]?.variant?.attributes || [];
+	const originId = getAtrrValueID(attributes, "departure-city");
+	const destinationId = getAtrrValueID(attributes, "arrival-city");
+	const fullDateString = getAttrValue(attributes, "departure-time");
+	const cleanDate = fullDateString ? fullDateString.split(" ")[0] : null;
+
+	return {
+       originId,
+	   destinationId,
+	   date:cleanDate
+	}
+
+}

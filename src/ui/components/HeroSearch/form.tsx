@@ -5,9 +5,7 @@ import { useState, useEffect, useRef } from "react";
 import { MapPin, Calendar, ArrowLeftRight } from "lucide-react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
-import { TripSearchData, useTripSearch } from "@/context/TripSearchContext";
-import { TripSearchFormSkeleton } from "./skeleton";
-import { useProgress } from "@/context/ProgressContext";
+import { TripSearchData } from "@/context/TripSearchContext";
 import { citiesType } from "./HeroSearch";
 import { useSessionTimer } from "@/context/SessionTimerContext";
 

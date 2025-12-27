@@ -12675,6 +12675,8 @@ export type Mutation = {
    * - STAFF_SET_PASSWORD_REQUESTED (async): Setting a new password for the staff account is requested.
    */
   requestPasswordReset?: Maybe<RequestPasswordReset>;
+  /** Triggers an SMS OTP and prepares a password reset token. */
+  requestPasswordResetOtp?: Maybe<RequestPasswordResetOtp>;
   /**
    * Deletes sales.
    *
@@ -12759,6 +12761,7 @@ export type Mutation = {
    * - ACCOUNT_CONFIRMATION_REQUESTED (async): An account confirmation was requested. This event is always sent regardless of settings.
    */
   sendConfirmationEmail?: Maybe<SendConfirmationEmail>;
+  sendOtp?: Maybe<SendOtpMutation>;
   /** Sets the user's password from the token sent by email using the RequestPasswordReset mutation. */
   setPassword?: Maybe<SetPassword>;
   /**
@@ -13089,6 +13092,9 @@ export type Mutation = {
    * Requires one of the following permissions: MANAGE_PRODUCTS.
    */
   variantMediaUnassign?: Maybe<VariantMediaUnassign>;
+  verifyOtp?: Maybe<VerifyOtpMutation>;
+  /** Verifies Twilio OTP and returns the Saleor reset token. */
+  verifyPasswordResetOtp?: Maybe<VerifyPasswordResetOtp>;
   /**
    * Deletes vouchers.
    *
@@ -14690,6 +14696,11 @@ export type MutationRequestPasswordResetArgs = {
 };
 
 
+export type MutationRequestPasswordResetOtpArgs = {
+  phoneNumber: Scalars['String']['input'];
+};
+
+
 export type MutationSaleBulkDeleteArgs = {
   ids: Array<Scalars['ID']['input']>;
 };
@@ -14739,6 +14750,11 @@ export type MutationSaleUpdateArgs = {
 export type MutationSendConfirmationEmailArgs = {
   channel: Scalars['String']['input'];
   redirectUrl: Scalars['String']['input'];
+};
+
+
+export type MutationSendOtpArgs = {
+  phoneNumber: Scalars['String']['input'];
 };
 
 
@@ -15054,6 +15070,18 @@ export type MutationVariantMediaAssignArgs = {
 export type MutationVariantMediaUnassignArgs = {
   mediaId: Scalars['ID']['input'];
   variantId: Scalars['ID']['input'];
+};
+
+
+export type MutationVerifyOtpArgs = {
+  otp: Scalars['String']['input'];
+  phoneNumber: Scalars['String']['input'];
+};
+
+
+export type MutationVerifyPasswordResetOtpArgs = {
+  otp: Scalars['String']['input'];
+  phoneNumber: Scalars['String']['input'];
 };
 
 
@@ -19521,6 +19549,12 @@ export type PermissionGroupUpdated = Event & {
   version?: Maybe<Scalars['String']['output']>;
 };
 
+export type PhoneExistenceType = {
+  __typename?: 'PhoneExistenceType';
+  error?: Maybe<Scalars['String']['output']>;
+  exists?: Maybe<Scalars['Boolean']['output']>;
+};
+
 /** Plugin. */
 export type Plugin = {
   __typename?: 'Plugin';
@@ -23531,6 +23565,8 @@ export type Query = {
    * Requires one of the following permissions: AUTHENTICATED_APP, AUTHENTICATED_STAFF_USER.
    */
   channels?: Maybe<Array<Channel>>;
+  /** Check if a phone number exists in the system. */
+  checkPhoneExists?: Maybe<PhoneExistenceType>;
   /**
    * Look up a checkout by id.
    *
@@ -23985,6 +24021,11 @@ export type QueryCategoryArgs = {
 export type QueryChannelArgs = {
   id?: InputMaybe<Scalars['ID']['input']>;
   slug?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryCheckPhoneExistsArgs = {
+  phoneNumber: Scalars['String']['input'];
 };
 
 
@@ -24662,6 +24703,14 @@ export type RequestPasswordReset = {
   errors: Array<AccountError>;
 };
 
+/** Triggers an SMS OTP and prepares a password reset token. */
+export type RequestPasswordResetOtp = {
+  __typename?: 'RequestPasswordResetOTP';
+  /** @deprecated Use `errors` field instead. */
+  accountErrors: Array<AccountError>;
+  errors: Array<AccountError>;
+};
+
 export enum RewardTypeEnum {
   Gift = 'GIFT',
   SubtotalDiscount = 'SUBTOTAL_DISCOUNT'
@@ -25298,6 +25347,12 @@ export enum SendConfirmationEmailErrorCode {
   Invalid = 'INVALID',
   MissingChannelSlug = 'MISSING_CHANNEL_SLUG'
 }
+
+export type SendOtpMutation = {
+  __typename?: 'SendOTPMutation';
+  error?: Maybe<Scalars['String']['output']>;
+  message?: Maybe<Scalars['String']['output']>;
+};
 
 export type SeoInput = {
   /** SEO description. */
@@ -29397,6 +29452,23 @@ export type VariantPricingInfo = {
   priceUndiscounted?: Maybe<TaxedMoney>;
 };
 
+export type VerifyOtpMutation = {
+  __typename?: 'VerifyOTPMutation';
+  error?: Maybe<Scalars['String']['output']>;
+  message?: Maybe<Scalars['String']['output']>;
+  status?: Maybe<Scalars['String']['output']>;
+};
+
+/** Verifies Twilio OTP and returns the Saleor reset token. */
+export type VerifyPasswordResetOtp = {
+  __typename?: 'VerifyPasswordResetOTP';
+  /** @deprecated Use `errors` field instead. */
+  accountErrors: Array<AccountError>;
+  errors: Array<AccountError>;
+  /** The Saleor password reset token. */
+  token?: Maybe<Scalars['String']['output']>;
+};
+
 /** Verify JWT token. */
 export type VerifyToken = {
   __typename?: 'VerifyToken';
@@ -31795,12 +31867,12 @@ export type TransactionProcessMutation = { __typename?: 'Mutation', transactionP
 
 export type AccountErrorFragment = { __typename?: 'AccountError', message?: string | null, field?: string | null, code: AccountErrorCode };
 
-export type UserFragment = { __typename?: 'User', id: string, email: string, addresses: Array<{ __typename?: 'Address', id: string, city: string, phone?: string | null, postalCode: string, companyName: string, cityArea: string, streetAddress1: string, streetAddress2: string, countryArea: string, firstName: string, lastName: string, country: { __typename?: 'CountryDisplay', country: string, code: string } }>, defaultBillingAddress?: { __typename?: 'Address', id: string, city: string, phone?: string | null, postalCode: string, companyName: string, cityArea: string, streetAddress1: string, streetAddress2: string, countryArea: string, firstName: string, lastName: string, country: { __typename?: 'CountryDisplay', country: string, code: string } } | null, defaultShippingAddress?: { __typename?: 'Address', id: string, city: string, phone?: string | null, postalCode: string, companyName: string, cityArea: string, streetAddress1: string, streetAddress2: string, countryArea: string, firstName: string, lastName: string, country: { __typename?: 'CountryDisplay', country: string, code: string } } | null };
+export type UserFragment = { __typename?: 'User', id: string, email: string, firstName: string, lastName: string, addresses: Array<{ __typename?: 'Address', id: string, city: string, phone?: string | null, postalCode: string, companyName: string, cityArea: string, streetAddress1: string, streetAddress2: string, countryArea: string, firstName: string, lastName: string, country: { __typename?: 'CountryDisplay', country: string, code: string } }>, defaultBillingAddress?: { __typename?: 'Address', id: string, city: string, phone?: string | null, postalCode: string, companyName: string, cityArea: string, streetAddress1: string, streetAddress2: string, countryArea: string, firstName: string, lastName: string, country: { __typename?: 'CountryDisplay', country: string, code: string } } | null, defaultShippingAddress?: { __typename?: 'Address', id: string, city: string, phone?: string | null, postalCode: string, companyName: string, cityArea: string, streetAddress1: string, streetAddress2: string, countryArea: string, firstName: string, lastName: string, country: { __typename?: 'CountryDisplay', country: string, code: string } } | null };
 
 export type UserQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type UserQuery = { __typename?: 'Query', user?: { __typename?: 'User', id: string, email: string, addresses: Array<{ __typename?: 'Address', id: string, city: string, phone?: string | null, postalCode: string, companyName: string, cityArea: string, streetAddress1: string, streetAddress2: string, countryArea: string, firstName: string, lastName: string, country: { __typename?: 'CountryDisplay', country: string, code: string } }>, defaultBillingAddress?: { __typename?: 'Address', id: string, city: string, phone?: string | null, postalCode: string, companyName: string, cityArea: string, streetAddress1: string, streetAddress2: string, countryArea: string, firstName: string, lastName: string, country: { __typename?: 'CountryDisplay', country: string, code: string } } | null, defaultShippingAddress?: { __typename?: 'Address', id: string, city: string, phone?: string | null, postalCode: string, companyName: string, cityArea: string, streetAddress1: string, streetAddress2: string, countryArea: string, firstName: string, lastName: string, country: { __typename?: 'CountryDisplay', country: string, code: string } } | null } | null };
+export type UserQuery = { __typename?: 'Query', user?: { __typename?: 'User', id: string, email: string, firstName: string, lastName: string, addresses: Array<{ __typename?: 'Address', id: string, city: string, phone?: string | null, postalCode: string, companyName: string, cityArea: string, streetAddress1: string, streetAddress2: string, countryArea: string, firstName: string, lastName: string, country: { __typename?: 'CountryDisplay', country: string, code: string } }>, defaultBillingAddress?: { __typename?: 'Address', id: string, city: string, phone?: string | null, postalCode: string, companyName: string, cityArea: string, streetAddress1: string, streetAddress2: string, countryArea: string, firstName: string, lastName: string, country: { __typename?: 'CountryDisplay', country: string, code: string } } | null, defaultShippingAddress?: { __typename?: 'Address', id: string, city: string, phone?: string | null, postalCode: string, companyName: string, cityArea: string, streetAddress1: string, streetAddress2: string, countryArea: string, firstName: string, lastName: string, country: { __typename?: 'CountryDisplay', country: string, code: string } } | null } | null };
 
 export type UserRegisterMutationVariables = Exact<{
   input: AccountRegisterInput;
@@ -31823,7 +31895,7 @@ export type UserAddressDeleteMutationVariables = Exact<{
 }>;
 
 
-export type UserAddressDeleteMutation = { __typename?: 'Mutation', accountAddressDelete?: { __typename?: 'AccountAddressDelete', user?: { __typename?: 'User', id: string, email: string, addresses: Array<{ __typename?: 'Address', id: string, city: string, phone?: string | null, postalCode: string, companyName: string, cityArea: string, streetAddress1: string, streetAddress2: string, countryArea: string, firstName: string, lastName: string, country: { __typename?: 'CountryDisplay', country: string, code: string } }>, defaultBillingAddress?: { __typename?: 'Address', id: string, city: string, phone?: string | null, postalCode: string, companyName: string, cityArea: string, streetAddress1: string, streetAddress2: string, countryArea: string, firstName: string, lastName: string, country: { __typename?: 'CountryDisplay', country: string, code: string } } | null, defaultShippingAddress?: { __typename?: 'Address', id: string, city: string, phone?: string | null, postalCode: string, companyName: string, cityArea: string, streetAddress1: string, streetAddress2: string, countryArea: string, firstName: string, lastName: string, country: { __typename?: 'CountryDisplay', country: string, code: string } } | null } | null, errors: Array<{ __typename?: 'AccountError', message?: string | null, field?: string | null, code: AccountErrorCode }>, address?: { __typename?: 'Address', id: string, city: string, phone?: string | null, postalCode: string, companyName: string, cityArea: string, streetAddress1: string, streetAddress2: string, countryArea: string, firstName: string, lastName: string, country: { __typename?: 'CountryDisplay', country: string, code: string } } | null } | null };
+export type UserAddressDeleteMutation = { __typename?: 'Mutation', accountAddressDelete?: { __typename?: 'AccountAddressDelete', user?: { __typename?: 'User', id: string, email: string, firstName: string, lastName: string, addresses: Array<{ __typename?: 'Address', id: string, city: string, phone?: string | null, postalCode: string, companyName: string, cityArea: string, streetAddress1: string, streetAddress2: string, countryArea: string, firstName: string, lastName: string, country: { __typename?: 'CountryDisplay', country: string, code: string } }>, defaultBillingAddress?: { __typename?: 'Address', id: string, city: string, phone?: string | null, postalCode: string, companyName: string, cityArea: string, streetAddress1: string, streetAddress2: string, countryArea: string, firstName: string, lastName: string, country: { __typename?: 'CountryDisplay', country: string, code: string } } | null, defaultShippingAddress?: { __typename?: 'Address', id: string, city: string, phone?: string | null, postalCode: string, companyName: string, cityArea: string, streetAddress1: string, streetAddress2: string, countryArea: string, firstName: string, lastName: string, country: { __typename?: 'CountryDisplay', country: string, code: string } } | null } | null, errors: Array<{ __typename?: 'AccountError', message?: string | null, field?: string | null, code: AccountErrorCode }>, address?: { __typename?: 'Address', id: string, city: string, phone?: string | null, postalCode: string, companyName: string, cityArea: string, streetAddress1: string, streetAddress2: string, countryArea: string, firstName: string, lastName: string, country: { __typename?: 'CountryDisplay', country: string, code: string } } | null } | null };
 
 export type UserAddressUpdateMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -31831,7 +31903,7 @@ export type UserAddressUpdateMutationVariables = Exact<{
 }>;
 
 
-export type UserAddressUpdateMutation = { __typename?: 'Mutation', accountAddressUpdate?: { __typename?: 'AccountAddressUpdate', user?: { __typename?: 'User', id: string, email: string, addresses: Array<{ __typename?: 'Address', id: string, city: string, phone?: string | null, postalCode: string, companyName: string, cityArea: string, streetAddress1: string, streetAddress2: string, countryArea: string, firstName: string, lastName: string, country: { __typename?: 'CountryDisplay', country: string, code: string } }>, defaultBillingAddress?: { __typename?: 'Address', id: string, city: string, phone?: string | null, postalCode: string, companyName: string, cityArea: string, streetAddress1: string, streetAddress2: string, countryArea: string, firstName: string, lastName: string, country: { __typename?: 'CountryDisplay', country: string, code: string } } | null, defaultShippingAddress?: { __typename?: 'Address', id: string, city: string, phone?: string | null, postalCode: string, companyName: string, cityArea: string, streetAddress1: string, streetAddress2: string, countryArea: string, firstName: string, lastName: string, country: { __typename?: 'CountryDisplay', country: string, code: string } } | null } | null, errors: Array<{ __typename?: 'AccountError', message?: string | null, field?: string | null, code: AccountErrorCode }>, address?: { __typename?: 'Address', id: string, city: string, phone?: string | null, postalCode: string, companyName: string, cityArea: string, streetAddress1: string, streetAddress2: string, countryArea: string, firstName: string, lastName: string, country: { __typename?: 'CountryDisplay', country: string, code: string } } | null } | null };
+export type UserAddressUpdateMutation = { __typename?: 'Mutation', accountAddressUpdate?: { __typename?: 'AccountAddressUpdate', user?: { __typename?: 'User', id: string, email: string, firstName: string, lastName: string, addresses: Array<{ __typename?: 'Address', id: string, city: string, phone?: string | null, postalCode: string, companyName: string, cityArea: string, streetAddress1: string, streetAddress2: string, countryArea: string, firstName: string, lastName: string, country: { __typename?: 'CountryDisplay', country: string, code: string } }>, defaultBillingAddress?: { __typename?: 'Address', id: string, city: string, phone?: string | null, postalCode: string, companyName: string, cityArea: string, streetAddress1: string, streetAddress2: string, countryArea: string, firstName: string, lastName: string, country: { __typename?: 'CountryDisplay', country: string, code: string } } | null, defaultShippingAddress?: { __typename?: 'Address', id: string, city: string, phone?: string | null, postalCode: string, companyName: string, cityArea: string, streetAddress1: string, streetAddress2: string, countryArea: string, firstName: string, lastName: string, country: { __typename?: 'CountryDisplay', country: string, code: string } } | null } | null, errors: Array<{ __typename?: 'AccountError', message?: string | null, field?: string | null, code: AccountErrorCode }>, address?: { __typename?: 'Address', id: string, city: string, phone?: string | null, postalCode: string, companyName: string, cityArea: string, streetAddress1: string, streetAddress2: string, countryArea: string, firstName: string, lastName: string, country: { __typename?: 'CountryDisplay', country: string, code: string } } | null } | null };
 
 export type UserAddressCreateMutationVariables = Exact<{
   address: AddressInput;
@@ -31839,7 +31911,7 @@ export type UserAddressCreateMutationVariables = Exact<{
 }>;
 
 
-export type UserAddressCreateMutation = { __typename?: 'Mutation', accountAddressCreate?: { __typename?: 'AccountAddressCreate', user?: { __typename?: 'User', id: string, email: string, addresses: Array<{ __typename?: 'Address', id: string, city: string, phone?: string | null, postalCode: string, companyName: string, cityArea: string, streetAddress1: string, streetAddress2: string, countryArea: string, firstName: string, lastName: string, country: { __typename?: 'CountryDisplay', country: string, code: string } }>, defaultBillingAddress?: { __typename?: 'Address', id: string, city: string, phone?: string | null, postalCode: string, companyName: string, cityArea: string, streetAddress1: string, streetAddress2: string, countryArea: string, firstName: string, lastName: string, country: { __typename?: 'CountryDisplay', country: string, code: string } } | null, defaultShippingAddress?: { __typename?: 'Address', id: string, city: string, phone?: string | null, postalCode: string, companyName: string, cityArea: string, streetAddress1: string, streetAddress2: string, countryArea: string, firstName: string, lastName: string, country: { __typename?: 'CountryDisplay', country: string, code: string } } | null } | null, errors: Array<{ __typename?: 'AccountError', message?: string | null, field?: string | null, code: AccountErrorCode }>, address?: { __typename?: 'Address', id: string, city: string, phone?: string | null, postalCode: string, companyName: string, cityArea: string, streetAddress1: string, streetAddress2: string, countryArea: string, firstName: string, lastName: string, country: { __typename?: 'CountryDisplay', country: string, code: string } } | null } | null };
+export type UserAddressCreateMutation = { __typename?: 'Mutation', accountAddressCreate?: { __typename?: 'AccountAddressCreate', user?: { __typename?: 'User', id: string, email: string, firstName: string, lastName: string, addresses: Array<{ __typename?: 'Address', id: string, city: string, phone?: string | null, postalCode: string, companyName: string, cityArea: string, streetAddress1: string, streetAddress2: string, countryArea: string, firstName: string, lastName: string, country: { __typename?: 'CountryDisplay', country: string, code: string } }>, defaultBillingAddress?: { __typename?: 'Address', id: string, city: string, phone?: string | null, postalCode: string, companyName: string, cityArea: string, streetAddress1: string, streetAddress2: string, countryArea: string, firstName: string, lastName: string, country: { __typename?: 'CountryDisplay', country: string, code: string } } | null, defaultShippingAddress?: { __typename?: 'Address', id: string, city: string, phone?: string | null, postalCode: string, companyName: string, cityArea: string, streetAddress1: string, streetAddress2: string, countryArea: string, firstName: string, lastName: string, country: { __typename?: 'CountryDisplay', country: string, code: string } } | null } | null, errors: Array<{ __typename?: 'AccountError', message?: string | null, field?: string | null, code: AccountErrorCode }>, address?: { __typename?: 'Address', id: string, city: string, phone?: string | null, postalCode: string, companyName: string, cityArea: string, streetAddress1: string, streetAddress2: string, countryArea: string, firstName: string, lastName: string, country: { __typename?: 'CountryDisplay', country: string, code: string } } | null } | null };
 
 export const CheckoutErrorFragmentDoc = gql`
     fragment CheckoutErrorFragment on CheckoutError {
@@ -32169,6 +32241,8 @@ export const UserFragmentDoc = gql`
     fragment UserFragment on User {
   id
   email
+  firstName
+  lastName
   addresses {
     ...AddressFragment
   }

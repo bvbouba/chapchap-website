@@ -32,7 +32,7 @@ export default async function Page(props: { params: Promise<{ channel: string }>
     
     return (
         <>
-            <ProgressHeader />
+            <ProgressHeader checkout={checkout}/>
 
             <CartDetail checkout={checkout} />
         </>

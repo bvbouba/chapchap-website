@@ -89,6 +89,8 @@ export const Contact: FC<ContactProps> = ({ setShowOnlyContact, onContinueToPaym
 				<SignedInUser
 					onSectionChange={handleChangeSection("guestUser")}
 					onSignOutSuccess={handleChangeSection("guestUser")}
+					onContinueToPayment={onContinueToPayment}
+					onEmailChange={setEmail}
 				/>
 			)}
 

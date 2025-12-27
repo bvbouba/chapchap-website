@@ -4,6 +4,7 @@ import { CategoryBySlugDocument, GetAttributeValueBySlugDocument } from "@/gql/g
 import { executeGraphQL } from "@/lib/graphql";
 import { getTransformedAttributes } from "@/lib/transformAttributes";
 import FilteredProductList from "@/ui/components/productList/FilteredProductList";
+import { getAllCities } from "@/actions";
 
 export const generateMetadata = async (
   props: { params: Promise<{ slug: string; channel: string }> },
@@ -23,15 +24,17 @@ export const generateMetadata = async (
 
 export default async function Page(props: { params: Promise<{ slug: string; channel: string }> }) {
   const params = await props.params;
+  
   const { category } = await executeGraphQL(CategoryBySlugDocument, {
     variables: { slug: params.slug, channel: params.channel },
     revalidate: 60,
   });
+  const cities = await getAllCities();
 
   if (!category) {
     notFound();
   }
-
+ 
   const metadata = category.metadata || [];
   const origin = metadata.find((m) => m.key === "origin")?.value;
   const destination = metadata.find((m) => m.key === "destination")?.value;
@@ -68,6 +71,7 @@ export default async function Page(props: { params: Promise<{ slug: string; chan
       busOperator={busOperator}
       categoryIDs={[category.id]}
       busOperatorName={busOperator}
+      cities={cities}
     />
   );
 }

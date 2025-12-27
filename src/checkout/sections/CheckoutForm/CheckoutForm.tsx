@@ -29,7 +29,8 @@ export const CheckoutForm = () => {
 
 	const totalSteps = 2;
 	const handleNext = () => setCurrentStep((prev) => Math.min(prev + 1, totalSteps));
-	const handleBack = () => setCurrentStep((prev) => Math.max(prev - 1, 1));
+	// const handleBack = () => setCurrentStep((prev) => Math.max(prev - 1, 1));
+	const handleBack = () => window.location.reload();
 
 	const isStep1 = currentStep === 1;
 	const isStep2 = currentStep === 2;

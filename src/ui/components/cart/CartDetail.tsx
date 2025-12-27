@@ -205,7 +205,6 @@ export default function CartDetail({ checkout }: CartProps) {
 					<CheckoutLink
 						checkoutId={checkout.id}
 						disabled={!checkout.lines.length || isPending}
-						isPending={isPending}
 						className="rounded-md bg-secondary px-6 py-2 text-white transition hover:bg-secondary-dark"
 					/>
 				</div>

@@ -4,13 +4,13 @@ import { LinkAsButton } from "@/checkout/components/LinkAsButton";
 import { ErrorContentWrapper } from "@/checkout/components/ErrorContentWrapper";
 
 export const EmptyCartPage = () => {
-	return (
-		<ErrorContentWrapper>
-			<Title className="mb-0 text-xl">Your cart is empty</Title>
-			<p>Add anything to the cart to continue.</p>
-			<LinkAsButton href="/" variant="secondary">
-				Go back to store
-			</LinkAsButton>
-		</ErrorContentWrapper>
-	);
+    return (
+        <ErrorContentWrapper>
+            <Title className="mb-0 text-xl">Votre panier est vide.</Title>
+            <p>Ajoutez des articles à votre panier pour continuer.</p>
+            <LinkAsButton href="/" variant="secondary">
+                Retourner à la boutique
+            </LinkAsButton>
+        </ErrorContentWrapper>
+    );
 };

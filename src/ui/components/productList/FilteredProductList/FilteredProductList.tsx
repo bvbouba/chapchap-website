@@ -35,7 +35,8 @@ export interface FilteredProductListProps {
 	destinationData: AssignedAttributeValueFragment | null | undefined;
 	busOperator?: string;
 	busOperatorName?: string;
-	cities : citiesType
+	cities : citiesType;
+	selectedDate?: string;
 }
 
 export interface Filters {
@@ -55,7 +56,8 @@ export function FilteredProductList({
 	destinationData,
 	busOperator,
 	busOperatorName,
-	cities
+	cities,
+	selectedDate
 }: FilteredProductListProps) {
 	const [queryFilters, setQueryFilters] = useQueryState("filters", {
 		parse: parseQueryAttributeFilters,
@@ -83,27 +85,40 @@ export function FilteredProductList({
 	// ✅ Initialize context when data arrives
 	useEffect(() => {
 		if (originData && destinationData) {
+
+			const todayStr = today.format("YYYY-MM-DD");
+            let validatedDate = todayStr
+
+			if (selectedDate) {
+                const dateOnly = selectedDate.split(/[ T]/)[0];
+                const parsedDate = dayjs(dateOnly);
+
+                if (parsedDate.isValid() && !parsedDate.isBefore(today, 'day')) {
+                    validatedDate = dateOnly;
+                }
+            }
+
 			setData({
-				tripType: data?.tripType ?? "oneway",
-				origin: {
-					id: originData.id ?? "",
-					name: originData.name ?? "",
-					slug: originData.slug ?? "",
-				},
-				destination: {
-					id: destinationData.id ?? "",
-					name: destinationData.name ?? "",
-					slug: destinationData.slug ?? "",
-				},
-				date: data?.date ?? today.format("YYYY-MM-DD"),
-				query: {
-					origin: originData.slug ?? "",
-					destination: destinationData.slug ?? "",
-					date: data?.date ?? today.format("YYYY-MM-DD"),
-				},
-			});
-		}
-	}, [originData, destinationData, setData]);
+                tripType: data?.tripType ?? "oneway",
+                origin: {
+                    id: originData.id ?? "",
+                    name: originData.name ?? "",
+                    slug: originData.slug ?? "",
+                },
+                destination: {
+                    id: destinationData.id ?? "",
+                    name: destinationData.name ?? "",
+                    slug: destinationData.slug ?? "",
+                },
+                date: data?.date ?? validatedDate,
+                query: {
+                    origin: originData.slug ?? "",
+                    destination: destinationData.slug ?? "",
+                    date: data?.date ?? validatedDate,
+                },
+            });
+        }
+    }, [originData, destinationData, selectedDate, setData]);
 
 	useEffect(() => {
 		setProductVariantsWhere({

@@ -1,3 +1,17 @@
+fragment SelectedAttribute on SelectedAttribute {
+	attribute {
+					name
+					slug
+					inputType
+				}
+				values {
+					name
+					slug
+					value
+					id
+				}
+}
+
 fragment Checkout on Checkout {
 	id
 	email
@@ -35,16 +49,7 @@ fragment Checkout on Checkout {
 			name
 			id
 			attributes {
-				attribute {
-					name
-					slug
-					inputType
-				}
-				values {
-					name
-					slug
-					value
-				}
+				...SelectedAttribute
 			}
 		}
 	}

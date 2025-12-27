@@ -4,7 +4,6 @@ import { useState, useTransition } from "react";
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
 import { useRouter } from "next/navigation";
-import Link from "next/link"; // Import Link for navigation
 import { loginSubmit } from "@/actions";
 import { isValidPhoneNumber } from "libphonenumber-js";
 import { LinkWithChannel } from "../atoms/LinkWithChannel";
