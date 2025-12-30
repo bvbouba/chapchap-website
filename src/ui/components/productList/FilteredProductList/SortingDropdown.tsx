@@ -5,15 +5,15 @@ import clsx from "clsx";
 import { Fragment, useState } from "react";
 import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 
-import { getSortingOptions, UrlSorting } from "./sorting";
-import { OrderDirection, ProductVariantSortField } from "@/gql/graphql";
+import { getSortingOptions, type UrlSorting } from "./sorting";
+import { type OrderDirection, type ProductVariantSortField } from "@/gql/graphql";
 
 export interface SortingDropdownProps {
 	optionToggle: (field?: ProductVariantSortField, direction?: OrderDirection) => void;
 	chosen: UrlSorting | null;
 }
 
-export function SortingDropdown({ optionToggle, chosen }: SortingDropdownProps) {
+export const SortingDropdown = ({ optionToggle, chosen }: SortingDropdownProps) => {
 	const options = getSortingOptions(chosen);
 	const [label, setLabel] = useState<string>("");
 
@@ -23,7 +23,7 @@ export function SortingDropdown({ optionToggle, chosen }: SortingDropdownProps) 
 				<>
 					<div>
 						<Menu.Button
-							className="focus:ring-brand inline-flex w-60 font-semibold text-sm items-center justify-between rounded-md border border-gray-200   bg-white px-4 py-2 text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2"
+							className="focus:ring-brand inline-flex w-60 items-center justify-between rounded-md border border-gray-200 bg-white px-4   py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2"
 							data-testid="sortBy"
 						>
 							{label ? `Trier par: ${label}` : "Trier"}
@@ -74,6 +74,4 @@ export function SortingDropdown({ optionToggle, chosen }: SortingDropdownProps) 
 			)}
 		</Menu>
 	);
-}
-
-export default SortingDropdown;
+};

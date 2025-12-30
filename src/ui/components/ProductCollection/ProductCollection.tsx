@@ -1,18 +1,18 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import {
-	OrderDirection,
-	ProductVariantCollectionQuery,
-	ProductVariantSortField,
-	ProductVariantWhereInput,
-} from "@/gql/graphql";
+import React, { useEffect, useState, useCallback } from "react"; // ✅ Ajout de useCallback
 import { ProductList } from "../ProductList";
-import SortingDropdown from "../productList/FilteredProductList/SortingDropdown";
-import { UrlSorting } from "../productList/FilteredProductList/sorting";
-import { mapEdgesToItems } from "@/lib/maps";
+import { SortingDropdown } from "../productList/FilteredProductList/SortingDropdown";
+import { type UrlSorting } from "../productList/FilteredProductList/sorting";
 import { TopPaginationInfo } from "../Pagination/TopPaginationInfo";
 import { BottomPagination } from "../Pagination/BottomPagination";
+import { mapEdgesToItems } from "@/lib/maps";
+import {
+	type OrderDirection,
+	type ProductVariantCollectionQuery,
+	type ProductVariantSortField,
+	type ProductVariantWhereInput,
+} from "@/gql/graphql";
 
 export interface ProductCollectionProps {
 	where?: ProductVariantWhereInput;
@@ -31,7 +31,7 @@ export interface ProductCollectionProps {
 	displayUpcomingTrip?: boolean;
 }
 
-export function ProductCollection({
+export const ProductCollection = ({
 	where,
 	sortBy,
 	setCounter,
@@ -43,87 +43,90 @@ export function ProductCollection({
 	optionToggle,
 	chosen,
 	displayUpcomingTrip = false,
-}: ProductCollectionProps) {
+}: ProductCollectionProps) => {
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 	const [data, setData] = useState<ProductVariantCollectionQuery | null>(null);
 
-	async function fetchProducts(cursor?: string) {
-		try {
-			setLoading(true);
-			setError(null);
+	// ✅ Correction: fetchProducts est maintenant enveloppée dans useCallback
+	const fetchProducts = useCallback(
+		async (cursor?: string) => {
+			try {
+				setLoading(true);
+				setError(null);
 
-			const updatedWhere: ProductVariantWhereInput = {
-				...where,
-				attributes: [
-					...(where?.attributes ?? []),
-					{ slug: "departure-city", value: { slug: { oneOf: [originSlug] } } },
-					{ slug: "arrival-city", value: { slug: { oneOf: [destinationSlug] } } },
-					{
-						slug: "departure-time",
-						value: {
-							dateTime: {
-								gte: `${date}T00:00:00`,
-								lte: `${date}T23:59:59`,
+				const updatedWhere: ProductVariantWhereInput = {
+					...where,
+					attributes: [
+						...(where?.attributes ?? []),
+						{ slug: "departure-city", value: { slug: { oneOf: [originSlug] } } },
+						{ slug: "arrival-city", value: { slug: { oneOf: [destinationSlug] } } },
+						{
+							slug: "departure-time",
+							value: {
+								dateTime: {
+									gte: `${date}T00:00:00`,
+									lte: `${date}T23:59:59`,
+								},
 							},
 						},
-					},
-				],
-			};
+					],
+				};
 
-			const res = await fetch("/api/product-collection", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({
-					where: updatedWhere,
-					sortBy,
-					perPage,
-					after: cursor,
-					channel: "ci",
-				}),
-			});
-
-			if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-			const result = (await res.json()) as ProductVariantCollectionQuery;
-			const productVariants = result.productVariants;
-			setData(result);
-
-			if (cursor && data && productVariants) {
-				setData({
-					...result,
-					productVariants: {
-						...productVariants,
-						edges: [...(data.productVariants?.edges ?? []), ...(result.productVariants?.edges ?? [])],
-					},
+				const res = await fetch("/api/product-collection", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({
+						where: updatedWhere,
+						sortBy,
+						perPage,
+						after: cursor,
+						channel: "ci",
+					}),
 				});
-			} else {
-				setData(result);
+
+				if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+				const result = (await res.json()) as ProductVariantCollectionQuery;
+
+				// On utilise la version fonctionnelle de setData pour éviter de dépendre de 'data' dans useCallback
+				setData((prevData) => {
+					const productVariants = result.productVariants;
+					if (cursor && prevData && productVariants) {
+						return {
+							...result,
+							productVariants: {
+								...productVariants,
+								edges: [...(prevData.productVariants?.edges ?? []), ...(result.productVariants?.edges ?? [])],
+							},
+						};
+					}
+					return result;
+				});
+			} catch (err) {
+				console.error("Erreur:", err);
+				setError("Impossible de charger les produits.");
+			} finally {
+				setLoading(false);
 			}
-		} catch (err) {
-			console.error("Erreur:", err);
-			setError("Impossible de charger les produits.");
-		} finally {
-			setLoading(false);
-		}
-	}
+		},
+		[where, sortBy, originSlug, destinationSlug, date, perPage],
+	); // Dépendances de useCallback
 
 	useEffect(() => {
-		fetchProducts();
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [where, sortBy, originSlug, destinationSlug, date]);
+		void fetchProducts();
+	}, [fetchProducts]); // ✅ Maintenant fetchProducts peut être inclus ici en toute sécurité
 
 	useEffect(() => {
 		if (setCounter) {
 			setCounter(data?.productVariants?.totalCount || 0);
 		}
-	}, [data?.productVariants?.totalCount]);
+	}, [data?.productVariants?.totalCount, setCounter]);
 
 	const onLoadMore = () => {
 		const nextCursor = data?.productVariants?.pageInfo.endCursor || null;
-
 		if (nextCursor) {
-			fetchProducts(nextCursor);
+			void fetchProducts(nextCursor);
 		}
 	};
 
@@ -135,15 +138,13 @@ export function ProductCollection({
 
 	return (
 		<div className="relative w-3/4 space-y-4 md:w-3/4">
-			{/* 🔄 Overlay loader instead of replacing UI */}
 			{loading && (
 				<div className="absolute inset-0 z-20 flex items-center justify-center bg-white/60">
 					<div className="h-16 w-16 animate-spin rounded-full border-4 border-gray-300 border-t-primary"></div>
 				</div>
 			)}
 
-			{/* Content remains visible behind loader */}
-			{variants.length && !displayUpcomingTrip ? (
+			{variants.length > 0 && !displayUpcomingTrip ? (
 				<div className="flex items-center justify-between">
 					<SortingDropdown optionToggle={optionToggle} chosen={chosen} />
 					<TopPaginationInfo
@@ -151,11 +152,9 @@ export function ProductCollection({
 						totalCount={data?.productVariants?.totalCount || 0}
 					/>
 				</div>
-			) : (
-				<></>
-			)}
+			) : null}
 
-			{variants.length ? (
+			{variants.length > 0 ? (
 				<ProductList variants={variants} />
 			) : (
 				!loading && (
@@ -168,6 +167,4 @@ export function ProductCollection({
 			)}
 		</div>
 	);
-}
-
-export default ProductCollection;
+};

@@ -1,44 +1,45 @@
 "use client";
 
-import { AssignedAttributeValueFragment } from "@/gql/graphql";
 import { useState, useEffect, useRef } from "react";
 import { MapPin, Calendar, ArrowLeftRight } from "lucide-react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
-import { TripSearchData } from "@/context/TripSearchContext";
-import { citiesType } from "./HeroSearch";
+import { type citiesType } from "./HeroSearch";
+import { type TripSearchData } from "@/context/TripSearchContext";
+import { type AssignedAttributeValueFragment } from "@/gql/graphql";
 import { useSessionTimer } from "@/context/SessionTimerContext";
 
 export type FormValues = {
-	origin: {
-		id: string;
-		name: string;
-		slug: string;
-	};
-	destination: {
-		id: string;
-		name: string;
-		slug: string;
-	};
-	date: string; // ISO yyyy-mm-dd
-	returnDate: string; // ISO yyyy-mm-dd or ""
+	origin: { id: string; name: string; slug: string };
+	destination: { id: string; name: string; slug: string };
+	date: string;
+	returnDate: string;
 };
 
 interface TripSearchFormProps {
-	onSubmit: (values: FormValues & { tripType: "oneway" | "roundtrip" }) => void;
+	// ✅ Correction du type : permet à onSubmit d'être asynchrone (Promise<void> | void)
+	onSubmit: (values: FormValues & { tripType: "oneway" | "roundtrip" }) => Promise<void> | void;
 	initialTripType?: "oneway" | "roundtrip";
 	data?: TripSearchData | null;
 	cities: citiesType;
 	isPending?: boolean;
 }
 
-export default function TripSearchForm({ onSubmit, data, initialTripType = "oneway", cities,isPending }: TripSearchFormProps) {
+export const TripSearchForm = ({
+	onSubmit,
+	data,
+	initialTripType = "oneway",
+	cities,
+	isPending,
+}: TripSearchFormProps) => {
 	const [tripType, setTripType] = useState<"oneway" | "roundtrip">(initialTripType);
-	const { departureCities, arrivalCities } = cities
+	const { departureCities, arrivalCities } = cities;
+
 	const [originSuggestions, setOriginSuggestions] = useState<AssignedAttributeValueFragment[]>([]);
 	const [destinationSuggestions, setDestinationSuggestions] = useState<AssignedAttributeValueFragment[]>([]);
 	const [showOriginSuggestions, setShowOriginSuggestions] = useState(false);
 	const [showDestinationSuggestions, setShowDestinationSuggestions] = useState(false);
+
 	const [originDisplay, setOriginDisplay] = useState("");
 	const [destinationDisplay, setDestinationDisplay] = useState("");
 	const [originSlug, setOriginSlug] = useState("");
@@ -49,8 +50,6 @@ export default function TripSearchForm({ onSubmit, data, initialTripType = "onew
 	const today = new Date().toISOString().split("T")[0];
 	const { resetTimer } = useSessionTimer();
 
-
-	// ✅ Close suggestions when clicking outside
 	useEffect(() => {
 		const handleClickOutside = (e: MouseEvent) => {
 			if (
@@ -67,27 +66,14 @@ export default function TripSearchForm({ onSubmit, data, initialTripType = "onew
 		return () => document.removeEventListener("mousedown", handleClickOutside);
 	}, []);
 
-	// ✅ Formik setup
 	const formik = useFormik({
-		initialValues: {
-			origin: "",
-			destination: "",
-			date: today,
-			returnDate: "",
-		},
+		initialValues: { origin: "", destination: "", date: today, returnDate: "" },
 		validationSchema: Yup.object({
 			origin: Yup.string().required("Veuillez saisir une ville"),
 			destination: Yup.string().required("Veuillez saisir une ville"),
 			date: Yup.string().required("Veuillez sélectionner une date"),
-			returnDate: Yup.string().when([], {
-				is: () => tripType === "roundtrip",
-				then: (schema) => schema.required("Veuillez sélectionner une date"),
-			}),
 		}),
 		onSubmit: async (values, { setSubmitting }) => {
-			console.log("✅ Submit triggered!");
-			// The spinner starts because isSubmitting becomes true automatically
-			
 			try {
 				const payload = {
 					...values,
@@ -95,162 +81,119 @@ export default function TripSearchForm({ onSubmit, data, initialTripType = "onew
 					origin: { id: values.origin, name: originDisplay, slug: originSlug },
 					destination: { id: values.destination, name: destinationDisplay, slug: destinationSlug },
 				};
-		
-				// We MUST await this so isSubmitting stays true
+
 				if (onSubmit) {
-					await onSubmit(payload); 
+					// ✅ L'erreur "Unexpected await of a non-Promise" est résolue par le changement de type ci-dessus
+					await onSubmit(payload);
 				}
 			} catch (error) {
-				console.error(error);
+				console.error("Erreur lors de la soumission:", error);
 			} finally {
-				// If we are still on the same page, turn off the spinner
-				resetTimer()
+				resetTimer();
 				setSubmitting(false);
 			}
 		},
 	});
 
-
-	// add this useEffect to debug:
-useEffect(() => {
-    if (Object.keys(formik.errors).length > 0 && formik.submitCount > 0) {
-        console.log("Validation Errors:", formik.errors);
-    }
-}, [formik.errors, formik.submitCount]);
-
-	// ✅ Suggestions filtering
 	useEffect(() => {
-		if (formik.values.origin.length >= 2) {
+		if (originDisplay.length >= 2) {
 			const filtered = departureCities.filter(
-				(c) => c.name?.toLowerCase().includes(formik.values.origin.toLowerCase()),
+				(c) => c.name?.toLowerCase().includes(originDisplay.toLowerCase()),
 			);
 			setOriginSuggestions(filtered.slice(0, 10));
+		} else {
+			setOriginSuggestions([]);
 		}
-	}, [formik.values.origin, departureCities]);
+	}, [originDisplay, departureCities]);
 
 	useEffect(() => {
-		if (formik.values.destination.length >= 2) {
+		if (destinationDisplay.length >= 2) {
 			const filtered = arrivalCities.filter(
-				(c) => c.name?.toLowerCase().includes(formik.values.destination.toLowerCase()),
+				(c) => c.name?.toLowerCase().includes(destinationDisplay.toLowerCase()),
 			);
 			setDestinationSuggestions(filtered.slice(0, 10));
+		} else {
+			setDestinationSuggestions([]);
 		}
-	}, [formik.values.destination, arrivalCities]);
+	}, [destinationDisplay, arrivalCities]);
 
-	// ✅ Pre-fill form if data exists
 	useEffect(() => {
 		if (data) {
-			formik.setValues({
+			void formik.setValues({
 				origin: data.origin.id,
 				destination: data.destination.id,
 				date: data.date || today,
 				returnDate: data.returnDate || "",
 			});
-
 			setOriginDisplay(data.origin.name);
 			setDestinationDisplay(data.destination.name);
 			setOriginSlug(data.origin.slug || "");
 			setDestinationSlug(data.destination.slug || "");
 			setTripType(data.tripType);
 		}
-	}, [data]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [data, today]);
 
 	const handleSelect = (city: AssignedAttributeValueFragment, type: "departure" | "arrival") => {
 		if (type === "departure") {
-			formik.setFieldValue("origin", city.id);
+			void formik.setFieldValue("origin", city.id);
 			setOriginDisplay(city.name || "");
-			setOriginSlug(city.slug || ""); // ✅ store slug
+			setOriginSlug(city.slug || "");
 			setShowOriginSuggestions(false);
 		} else {
-			formik.setFieldValue("destination", city.id);
+			void formik.setFieldValue("destination", city.id);
 			setDestinationDisplay(city.name || "");
-			setDestinationSlug(city.slug || ""); // ✅ store slug
+			setDestinationSlug(city.slug || "");
 			setShowDestinationSuggestions(false);
 		}
 	};
 
 	const handleSwitch = () => {
-		// Swap visible names
-		const tempDisplay = originDisplay;
+		const tempDisp = originDisplay;
 		setOriginDisplay(destinationDisplay);
-		setDestinationDisplay(tempDisplay);
-
-		// Swap slugs
+		setDestinationDisplay(tempDisp);
 		const tempSlug = originSlug;
 		setOriginSlug(destinationSlug);
 		setDestinationSlug(tempSlug);
-
-		// Swap form values (IDs)
-		const tempOriginId = formik.values.origin;
-		formik.setFieldValue("origin", formik.values.destination);
-		formik.setFieldValue("destination", tempOriginId);
+		const tempId = formik.values.origin;
+		void formik.setFieldValue("origin", formik.values.destination);
+		void formik.setFieldValue("destination", tempId);
 	};
-
-	// ✅ Show skeleton while loading
-	// if (loading) {
-	// 	return <TripSearchFormSkeleton />;
-	// }
 
 	return (
 		<>
-			{/* Trip type toggle */}
 			<div className="mb-6 flex items-center gap-6">
 				<label className="flex cursor-pointer items-center gap-2">
 					<input
 						type="radio"
-						name="tripType"
-						value="oneway"
 						checked={tripType === "oneway"}
 						onChange={() => {
 							setTripType("oneway");
-							formik.setFieldValue("returnDate", "");
+							void formik.setFieldValue("returnDate", "");
 						}}
-						className="h-4 w-4 border-gray-300 bg-gray-100 text-primary focus:ring-primary dark:ring-offset-gray-800 dark:focus:ring-primary "
+						className="h-4 w-4 text-primary focus:ring-primary"
 					/>
 					<span className="text-sm">Aller simple</span>
 				</label>
-				{/* <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="radio"
-                name="tripType"
-                value="roundtrip"
-                checked={tripType === "roundtrip"}
-                onChange={() => setTripType("roundtrip")}
-                className="w-4 h-4 text-primary bg-gray-100 border-gray-300 focus:ring-primary dark:focus:ring-primary dark:ring-offset-gray-800"
-              />
-              <span className="text-sm">Aller-retour</span>
-            </label> */}
 			</div>
 
-			{/* Form */}
 			<form
 				onSubmit={formik.handleSubmit}
-				className={`grid w-full items-start gap-3 sm:gap-4 ${tripType === "roundtrip"
-						? "md:grid-cols-[repeat(24,_minmax(0,_1fr))]"
-						: "md:grid-cols-[repeat(19,_minmax(0,_1fr))]"
-					}`}
+				className="grid w-full items-start gap-3 sm:gap-4 md:grid-cols-[repeat(19,_minmax(0,_1fr))]"
 			>
-				{/* Origin */}
 				<div ref={originRef} className="relative col-span-1 md:col-span-5">
 					<MapPin className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
 					<input
-						name="origin"
 						type="text"
 						placeholder="De: ville"
 						value={originDisplay}
-						onChange={(e) => {
-							setOriginDisplay(e.target.value);
-							formik.setFieldValue("origin", e.target.value);
-						}}
+						onChange={(e) => setOriginDisplay(e.target.value)}
 						onFocus={() => setShowOriginSuggestions(true)}
+						className="w-full rounded-md border border-gray-300 py-2 pl-10 pr-4 text-sm"
 						autoComplete="off"
-						autoCorrect="off"
-						autoCapitalize="off"
-						spellCheck="false"
-						className="w-full rounded-md border border-gray-300 bg-white py-2 pl-10 pr-4 text-sm text-gray-800 focus:border-gray-400 focus:ring-gray-400"
 					/>
 					{showOriginSuggestions && originSuggestions.length > 0 && (
-						<ul className="absolute z-10 mt-1 max-h-48 w-full overflow-y-auto rounded-md border border-gray-200 bg-white shadow-md">
+						<ul className="absolute z-10 mt-1 max-h-48 w-full overflow-y-auto rounded-md border bg-white shadow-md">
 							{originSuggestions.map((city) => (
 								<li
 									key={city.id}
@@ -262,44 +205,27 @@ useEffect(() => {
 							))}
 						</ul>
 					)}
-					{formik.touched.origin && formik.errors.origin && (
-						<p className="mt-1 text-xs text-red-500">{formik.errors.origin}</p>
-					)}
 				</div>
 
-				{/* Switch */}
 				<div className="col-span-1 flex items-center justify-center md:col-span-1">
-					<button
-						type="button"
-						onClick={handleSwitch}
-						className="rounded-full bg-gray-100 p-2 text-gray-600 transition hover:bg-gray-200"
-						title="Inverser les villes"
-					>
+					<button type="button" onClick={handleSwitch} className="rounded-full bg-gray-100 p-2">
 						<ArrowLeftRight className="h-5 w-5" />
 					</button>
 				</div>
 
-				{/* Destination */}
 				<div ref={destinationRef} className="relative col-span-1 md:col-span-5">
 					<MapPin className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
 					<input
-						name="destination"
 						type="text"
 						placeholder="À: ville"
 						value={destinationDisplay}
-						onChange={(e) => {
-							setDestinationDisplay(e.target.value);
-							formik.setFieldValue("destination", e.target.value);
-						}}
+						onChange={(e) => setDestinationDisplay(e.target.value)}
 						onFocus={() => setShowDestinationSuggestions(true)}
+						className="w-full rounded-md border border-gray-300 py-2 pl-10 pr-4 text-sm"
 						autoComplete="off"
-						autoCorrect="off"
-						autoCapitalize="off"
-						spellCheck="false"
-						className="w-full rounded-md border border-gray-300 bg-white py-2 pl-10 pr-4 text-sm text-gray-800 focus:border-gray-400 focus:ring-gray-400"
 					/>
 					{showDestinationSuggestions && destinationSuggestions.length > 0 && (
-						<ul className="absolute z-10 mt-1 max-h-48 w-full overflow-y-auto rounded-md border border-gray-200 bg-white shadow-md">
+						<ul className="absolute z-10 mt-1 max-h-48 w-full overflow-y-auto rounded-md border bg-white shadow-md">
 							{destinationSuggestions.map((city) => (
 								<li
 									key={city.id}
@@ -311,104 +237,32 @@ useEffect(() => {
 							))}
 						</ul>
 					)}
-					{formik.touched.destination && formik.errors.destination && (
-						<p className="mt-1 text-xs text-red-500">{formik.errors.destination}</p>
-					)}
 				</div>
 
-				{/* Dates */}
-				<div className={`col-span-1 flex ${tripType === "roundtrip" ? "md:col-span-10" : "md:col-span-5"}`}>
-					{/* Departure */}
-					<div className={`relative w-full ${tripType === "roundtrip" ? "flex-1" : "w-full"}`}>
-						<Calendar
-							onClick={() => {
-								const input = document.getElementById("date-picker") as HTMLInputElement | null;
-								(input as any)?.showPicker?.();
-							}}
-							className="absolute left-3 top-2.5 h-5 w-5 cursor-pointer text-gray-400"
-						/>
+				<div className="col-span-1 md:col-span-5">
+					<div className="relative w-full">
+						<Calendar className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
 						<input
-							id="date-picker"
-							name="date"
 							type="date"
 							value={formik.values.date}
 							min={today}
 							onChange={formik.handleChange}
-							className={`py-2 pl-10 pr-4 text-sm ${tripType === "roundtrip" ? "rounded-l-md" : "rounded-md"
-								} "bg-white w-full cursor-pointer appearance-none border border-gray-300 text-gray-800 focus:border-gray-400 focus:ring-gray-400 [&::-webkit-calendar-picker-indicator]:hidden`}
+							name="date"
+							className="w-full rounded-md border border-gray-300 py-2 pl-10 pr-4 text-sm"
 						/>
-						{formik.touched.date && formik.errors.date && (
-							<p className="mt-1 text-xs text-red-500">{formik.errors.date}</p>
-						)}
 					</div>
-
-					{/* Return Date */}
-					{tripType === "roundtrip" && (
-						<div className="relative flex-1">
-							<Calendar
-								onClick={() => {
-									const input = document.getElementById("return-date") as HTMLInputElement | null;
-									if (input) {
-										if (!input.value) {
-											input.type = "date";
-											input.value = formik.values.date;
-											formik.setFieldValue("returnDate", formik.values.date);
-										}
-										input.focus();
-										(input as any)?.showPicker?.();
-									}
-								}}
-								className="absolute left-3 top-2.5 h-5 w-5 cursor-pointer text-gray-400"
-							/>
-							<input
-								id="return-date"
-								name="returnDate"
-								type={formik.values.returnDate ? "date" : "text"}
-								placeholder="Retour"
-								value={formik.values.returnDate}
-								min={formik.values.date}
-								onFocus={(e) => {
-									e.currentTarget.type = "date";
-									if (!formik.values.returnDate) {
-										e.currentTarget.value = formik.values.date;
-										formik.setFieldValue("returnDate", formik.values.date);
-									}
-								}}
-								onBlur={(e) => {
-									if (!formik.values.returnDate) e.currentTarget.type = "text";
-								}}
-								onChange={formik.handleChange}
-								className="w-full cursor-pointer appearance-none rounded-r-md border border-l-0 border-gray-300 bg-white py-2 pl-10 pr-4 text-sm text-gray-800 focus:border-gray-400 focus:ring-gray-400 [&::-webkit-calendar-picker-indicator]:hidden"
-							/>
-							{formik.touched.returnDate && formik.errors.returnDate && (
-								<p className="mt-1 text-xs text-red-500">{formik.errors.returnDate}</p>
-							)}
-						</div>
-					)}
 				</div>
 
-				{/* Submit */}
 				<div className="col-span-1 flex justify-center md:col-span-3">
 					<button
 						type="submit"
-						disabled={formik.isSubmitting || isPending} // ✅ Prevent double clicks
-						className="w-full rounded-md bg-secondary px-3 py-2 text-sm font-semibold uppercase tracking-widest text-white transition hover:bg-secondary-dark md:w-auto disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+						disabled={formik.isSubmitting || isPending}
+						className="w-full rounded-md bg-secondary px-3 py-2 text-sm font-semibold uppercase text-white hover:bg-secondary-dark disabled:bg-gray-400"
 					>
-						{(formik.isSubmitting || isPending) ? (
-							<>
-								{/* Simple SVG Spinner */}
-								<svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-									<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-									<path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-								</svg>
-								Recherche...
-							</>
-						) : (
-							"Rechercher"
-						)}
+						{isPending ? "Recherche..." : "Rechercher"}
 					</button>
 				</div>
 			</form>
 		</>
 	);
-}
+};

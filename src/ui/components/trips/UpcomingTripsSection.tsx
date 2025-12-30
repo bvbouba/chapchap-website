@@ -12,12 +12,12 @@ interface UpcomingTripsSectionProps {
 	busOperatorName?: string;
 }
 
-export default function UpcomingTripsSection({
+export const UpcomingTripsSection = ({
 	originName,
 	destinationName,
 	initialDate,
 	busOperatorName,
-}: UpcomingTripsSectionProps) {
+}: UpcomingTripsSectionProps) => {
 	dayjs.locale("fr"); // ✅ set locale globally
 
 	const today = dayjs();
@@ -88,4 +88,4 @@ export default function UpcomingTripsSection({
 			</div>
 		</div>
 	);
-}
+};

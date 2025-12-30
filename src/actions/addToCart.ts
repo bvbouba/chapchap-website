@@ -2,8 +2,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { invariant } from "ts-invariant";
 import * as Checkout from "@/lib/checkout";
-import invariant from "ts-invariant";
 import { executeGraphQL } from "@/lib/graphql";
 import { CheckoutAddLineDocument } from "@/gql/graphql";
 import { deleteLineFromCheckout } from "@/app/[channel]/(main)/cart/actions";

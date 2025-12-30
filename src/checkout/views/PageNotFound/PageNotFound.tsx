@@ -14,8 +14,16 @@ export const PageNotFound = ({ error }: Partial<FallbackProps>) => {
 			<div className="mb-4 flex w-28 flex-col">
 				<SaleorLogo />
 			</div>
-			<p>We couldn&apos;t fetch information about your checkout. Go back to the store and try again.</p>
-			<Button ariaLabel="Go back to store" onClick={goBack} variant="secondary" label="Go back to store" />
+			<p>
+				Nous n&apos;avons pas pu récupérer les informations de votre commande. Retournez à la boutique et
+				réessayez.
+			</p>
+			<Button
+				ariaLabel="Retourner à la boutique"
+				onClick={goBack}
+				variant="secondary"
+				label="Retourner à la boutique"
+			/>
 		</ErrorContentWrapper>
 	);
 };

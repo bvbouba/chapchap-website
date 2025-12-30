@@ -19,20 +19,20 @@ export const AddressFormActions: React.FC<AddressFormActionsProps> = ({
 		<div className="flex flex-row justify-end gap-2">
 			{onDelete && (
 				<div className="flex">
-					<IconButton ariaLabel="Delete address" onClick={onDelete} icon={<TrashIcon aria-hidden />} />
+					<IconButton ariaLabel="Supprimer l'adresse" onClick={onDelete} icon={<TrashIcon aria-hidden />} />
 				</div>
 			)}
 
-			<Button ariaLabel="Cancel editing" variant="secondary" onClick={onCancel} label="Cancel" />
+			<Button ariaLabel="Annuler les modifications" variant="secondary" onClick={onCancel} label="Annuler" />
 			{loading ? (
 				<Button
 					ariaDisabled
-					ariaLabel="Save address"
+					ariaLabel="Enregistrement de l'adresse"
 					onClick={(e) => e.preventDefault()}
-					label="Processing…"
+					label="Traitement…"
 				/>
 			) : (
-				<Button ariaLabel="Save address" onClick={onSubmit} label="Save address" />
+				<Button ariaLabel="Enregistrer l'adresse" onClick={onSubmit} label="Enregistrer l'adresse" />
 			)}
 		</div>
 	);

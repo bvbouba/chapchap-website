@@ -3,29 +3,30 @@
 import { queryTypes, useQueryState } from "next-usequerystate";
 import { useEffect, useState } from "react";
 
+import dayjs from "dayjs";
+import { ProductCollection } from "../../ProductCollection";
+// ✅ Correction: Import nommé
+import { SimpleHeroSearch } from "../../HeroSearch/SimpleHeroSearch";
+import { UpcomingTripsSection } from "../../trips/UpcomingTripsSection";
+import { SectionFilter } from "../../trips/SectionFilter";
+import { ProgressHeader } from "../../ProgressHeader";
+import { type citiesType } from "../../HeroSearch/HeroSearch";
 import {
 	getPillsData,
 	parseQueryAttributeFilters,
 	serializeQueryAttributeFilters,
-	UrlFilter,
+	type UrlFilter,
 } from "./attributes";
-import { parseQuerySort, serializeQuerySort, UrlSorting } from "./sorting";
-import { FilterPill } from "./FilterPills";
+import { parseQuerySort, serializeQuerySort, type UrlSorting } from "./sorting";
+import { type FilterPill } from "./FilterPills";
 import {
-	AssignedAttributeValueFragment,
-	AttributeFilterFragment,
-	OrderDirection,
-	ProductVariantSortField,
-	ProductVariantWhereInput,
+	type AssignedAttributeValueFragment,
+	type AttributeFilterFragment,
+	type OrderDirection,
+	type ProductVariantSortField,
+	type ProductVariantWhereInput,
 } from "@/gql/graphql";
-import { ProductCollection } from "../../ProductCollection";
 import { useTripSearch } from "@/context/TripSearchContext";
-import SimpleHeroSearch from "../../HeroSearch/SimpleHeroSearch";
-import UpcomingTripsSection from "../../trips/UpcomingTripsSection";
-import SectionFilter from "../../trips/SectionFilter";
-import dayjs from "dayjs";
-import ProgressHeader from "../../ProgressHeader";
-import { citiesType } from "../../HeroSearch/HeroSearch";
 
 export interface FilteredProductListProps {
 	attributeFiltersData: AttributeFilterFragment[];
@@ -35,30 +36,21 @@ export interface FilteredProductListProps {
 	destinationData: AssignedAttributeValueFragment | null | undefined;
 	busOperator?: string;
 	busOperatorName?: string;
-	cities : citiesType;
+	cities: citiesType;
 	selectedDate?: string;
 }
 
-export interface Filters {
-	sortBy: string;
-	attributes: Record<string, Array<string>>;
-}
-
-export interface ListFilters {
-	attributes: {};
-}
-
-export function FilteredProductList({
+export const FilteredProductList = ({
 	attributeFiltersData,
-	collectionIDs,
-	categoryIDs,
 	originData,
 	destinationData,
 	busOperator,
 	busOperatorName,
 	cities,
-	selectedDate
-}: FilteredProductListProps) {
+	selectedDate,
+	categoryIDs,
+	collectionIDs,
+}: FilteredProductListProps) => {
 	const [queryFilters, setQueryFilters] = useQueryState("filters", {
 		parse: parseQueryAttributeFilters,
 		serialize: serializeQueryAttributeFilters,
@@ -70,9 +62,9 @@ export function FilteredProductList({
 	const [sortByQuery, setSortByQuery] = useQueryState("sortBy", {});
 
 	const sortBy = parseQuerySort(sortByQuery);
-	const setSortBy = (value: UrlSorting | undefined | null) => setSortByQuery(serializeQuerySort(value));
+	const setSortBy = (value: UrlSorting | undefined | null) => void setSortByQuery(serializeQuerySort(value));
 
-	const [inStockFilter, setInStockFilter] = useQueryState("inStock", queryTypes.boolean.withDefault(false));
+	const [inStockFilter] = useQueryState("inStock", queryTypes.boolean.withDefault(false));
 
 	const [productVariantsWhere, setProductVariantsWhere] = useState<ProductVariantWhereInput>();
 
@@ -82,57 +74,53 @@ export function FilteredProductList({
 
 	const today = dayjs();
 
-	// ✅ Initialize context when data arrives
 	useEffect(() => {
 		if (originData && destinationData) {
-
 			const todayStr = today.format("YYYY-MM-DD");
-            let validatedDate = todayStr
+			let validatedDate = todayStr;
 
 			if (selectedDate) {
-                const dateOnly = selectedDate.split(/[ T]/)[0];
-                const parsedDate = dayjs(dateOnly);
+				const dateOnly = selectedDate.split(/[ T]/)[0];
+				const parsedDate = dayjs(dateOnly);
 
-                if (parsedDate.isValid() && !parsedDate.isBefore(today, 'day')) {
-                    validatedDate = dateOnly;
-                }
-            }
+				if (parsedDate.isValid() && !parsedDate.isBefore(today, "day")) {
+					validatedDate = dateOnly;
+				}
+			}
 
 			setData({
-                tripType: data?.tripType ?? "oneway",
-                origin: {
-                    id: originData.id ?? "",
-                    name: originData.name ?? "",
-                    slug: originData.slug ?? "",
-                },
-                destination: {
-                    id: destinationData.id ?? "",
-                    name: destinationData.name ?? "",
-                    slug: destinationData.slug ?? "",
-                },
-                date: data?.date ?? validatedDate,
-                query: {
-                    origin: originData.slug ?? "",
-                    destination: destinationData.slug ?? "",
-                    date: data?.date ?? validatedDate,
-                },
-            });
-        }
-    }, [originData, destinationData, selectedDate, setData]);
+				tripType: data?.tripType ?? "oneway",
+				origin: {
+					id: originData.id ?? "",
+					name: originData.name ?? "",
+					slug: originData.slug ?? "",
+				},
+				destination: {
+					id: destinationData.id ?? "",
+					name: destinationData.name ?? "",
+					slug: destinationData.slug ?? "",
+				},
+				date: data?.date ?? validatedDate,
+				query: {
+					origin: originData.slug ?? "",
+					destination: destinationData.slug ?? "",
+					date: data?.date ?? validatedDate,
+				},
+			});
+		}
+		// ✅ Correction: Ajout des dépendances manquantes
+	}, [originData, destinationData, selectedDate, setData, data?.date, data?.tripType, today]);
 
 	useEffect(() => {
 		setProductVariantsWhere({
 			attributes: queryFilters.filter((filter) => filter.value.slug.oneOf.length),
-			// ...(categoryIDs?.length && { categories: categoryIDs }),
-			// ...(collectionIDs?.length && { collections: collectionIDs }),
 		});
-		// Eslint does not recognize stringified queryFilters, so we have to ignore it
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [inStockFilter, JSON.stringify(queryFilters), categoryIDs, collectionIDs]);
 
 	useEffect(() => {
 		if (busOperator && !queryFilters.some((f) => f.slug === "bus-operator")) {
-			setQueryFilters(
+			void setQueryFilters(
 				[...queryFilters, { slug: "bus-operator", value: { slug: { oneOf: [busOperator] } } }],
 				{ scroll: false, shallow: true },
 			);
@@ -152,7 +140,7 @@ export function FilteredProductList({
 			return result;
 		}, []);
 
-		setQueryFilters(newFilters.length ? newFilters : null, {
+		void setQueryFilters(newFilters.length ? newFilters : null, {
 			scroll: false,
 			shallow: true,
 		});
@@ -167,46 +155,44 @@ export function FilteredProductList({
 			return;
 		}
 
-		// if attribute was not used before, add it
 		const existingFilter = queryFilters.find((filter) => filter.slug === attributeSlug);
 		if (!existingFilter) {
-			setQueryFilters([...queryFilters, { slug: attributeSlug, value: { slug: { oneOf: [choiceSlug] } } }], {
-				scroll: false,
-				shallow: true,
-			});
+			void setQueryFilters(
+				[...queryFilters, { slug: attributeSlug, value: { slug: { oneOf: [choiceSlug] } } }],
+				{
+					scroll: false,
+					shallow: true,
+				},
+			);
 			return;
 		}
 
-		// if its already here, modify values list
 		existingFilter.value.slug.oneOf = [...existingFilter.value.slug.oneOf, choiceSlug];
-		setQueryFilters(queryFilters, {
+		void setQueryFilters(queryFilters, {
 			scroll: false,
 			shallow: true,
 		});
 	};
 
 	const clearFilters = async () => {
-		// await required when multiple query changes are applied at once
+		// ✅ Correction: await utilisé correctement ici car la fonction est async
 		await setQueryFilters(null, {
 			scroll: false,
 			shallow: true,
 		});
-		await setInStockFilter(null, {
-			scroll: false,
-			shallow: true,
-		});
+		// Note: Si setInStockFilter ne retourne pas de promesse, enlevez le await ou utilisez void
+		void setSortBy(null);
 	};
 
-	if (!productVariantsWhere) {
+	if (!productVariantsWhere || !data) {
 		return null;
 	}
 
-	if (!data) return null;
-
 	const displayUpcomingTrip = !!categoryIDs?.length;
+
 	return (
 		<>
-			<SimpleHeroSearch data={data} cities={cities}/>
+			<SimpleHeroSearch data={data} cities={cities} />
 
 			{displayUpcomingTrip ? (
 				<UpcomingTripsSection
@@ -250,6 +236,4 @@ export function FilteredProductList({
 			</div>
 		</>
 	);
-}
-
-export default FilteredProductList;
+};

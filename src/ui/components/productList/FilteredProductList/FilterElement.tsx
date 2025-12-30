@@ -73,5 +73,3 @@ export function FilterElement({ label, attributeSlug, options, optionToggle, bor
 		</div>
 	);
 }
-
-export default FilterElement;

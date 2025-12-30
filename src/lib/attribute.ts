@@ -1,10 +1,9 @@
-import { CheckoutFragment, SelectedAttributeFragment } from "@/gql/graphql";
 import dayjs from "dayjs";
+import { type CheckoutFragment, type SelectedAttributeFragment } from "@/gql/graphql";
 import "dayjs/locale/fr";
 dayjs.locale("fr");
 
 // Helper: get attribute value (name or value)
-
 
 export const getAttrValue = (attrs: SelectedAttributeFragment[], slug: string): string | undefined => {
 	const found = attrs.find((attr) => attr.attribute?.slug === slug);
@@ -13,9 +12,8 @@ export const getAttrValue = (attrs: SelectedAttributeFragment[], slug: string): 
 
 export const getAtrrValueID = (attrs: SelectedAttributeFragment[], slug: string): string | undefined => {
 	const found = attrs.find((attr) => attr.attribute?.slug === slug);
-	return found?.values?.[0]?.id  ?? undefined;
+	return found?.values?.[0]?.id ?? undefined;
 };
-
 
 // Parse duration string into total minutes
 export const parseDurationToMinutes = (raw?: string): number => {
@@ -91,8 +89,7 @@ export const getTripInformation = ({ attributes }: { attributes: SelectedAttribu
 	};
 };
 
-export const extractAttributesFromCHeckout =(checkout:CheckoutFragment | null | undefined)=>{
-
+export const extractAttributesFromCHeckout = (checkout: CheckoutFragment | null | undefined) => {
 	const attributes = checkout?.lines[0]?.variant?.attributes || [];
 	const originId = getAtrrValueID(attributes, "departure-city");
 	const destinationId = getAtrrValueID(attributes, "arrival-city");
@@ -100,9 +97,8 @@ export const extractAttributesFromCHeckout =(checkout:CheckoutFragment | null | 
 	const cleanDate = fullDateString ? fullDateString.split(" ")[0] : null;
 
 	return {
-       originId,
-	   destinationId,
-	   date:cleanDate
-	}
-
-}
+		originId,
+		destinationId,
+		date: cleanDate,
+	};
+};

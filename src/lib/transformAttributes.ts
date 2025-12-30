@@ -1,4 +1,4 @@
-import { AttributeFilterFragment, FilteringAttributesQueryDocument } from "@/gql/graphql";
+import { type AttributeFilterFragment, FilteringAttributesQueryDocument } from "@/gql/graphql";
 import { executeGraphQL } from "@/lib/graphql";
 import { mapEdgesToItems } from "@/lib/maps";
 
@@ -22,7 +22,7 @@ export async function getTransformedAttributes({
 		executeGraphQL(FilteringAttributesQueryDocument, {
 			variables: { channel, filter: { filterableInStorefront: true } },
 			revalidate: 60,
-			withAuth:false
+			withAuth: false,
 		}),
 	]);
 

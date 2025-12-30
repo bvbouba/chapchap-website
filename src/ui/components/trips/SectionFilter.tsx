@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { AttributeFilterFragment } from "@/gql/graphql";
-import FilterElement from "../productList/FilteredProductList/FilterElement";
-import { FilterPill } from "../productList/FilteredProductList/FilterPills";
+import { FilterElement } from "../productList/FilteredProductList/FilterElement";
+import { type FilterPill } from "../productList/FilteredProductList/FilterPills";
 import { getFilterOptions } from "../productList/FilteredProductList/attributes";
+import { type AttributeFilterFragment } from "@/gql/graphql";
 
 interface props {
 	pills: FilterPill[];
@@ -14,12 +14,7 @@ interface props {
 	addAttributeFilter: (attributeSlug: string, choiceSlug: string) => void;
 }
 
-export default function SectionFilter({
-	pills,
-	clearFilters,
-	attributeFiltersData,
-	addAttributeFilter,
-}: props) {
+export const SectionFilter = ({ pills, clearFilters, attributeFiltersData, addAttributeFilter }: props) => {
 	const [stopsOpen, setStopsOpen] = useState(false);
 
 	const STOP_SLUGS = ["departure-station", "arrival-station"];
@@ -35,7 +30,7 @@ export default function SectionFilter({
 				<div className="mb-6 border-b border-gray-200">
 					<button
 						onClick={clearFilters}
-						className="rounded-md pr-4 py-2 text-sm text-primary transition hover:text-red-600"
+						className="rounded-md py-2 pr-4 text-sm text-primary transition hover:text-red-600"
 					>
 						Réinitialiser tous les filtres
 					</button>
@@ -89,4 +84,4 @@ export default function SectionFilter({
 			))}
 		</aside>
 	);
-}
+};

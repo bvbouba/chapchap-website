@@ -6,11 +6,7 @@ import { SummaryPromoCodeRow } from "./SummaryPromoCodeRow";
 import { SummaryItemMoneyEditableSection } from "./SummaryItemMoneyEditableSection";
 
 import { Divider, Money, Title } from "@/checkout/components";
-import {
-	OrderLineFragment,
-	type CheckoutLineFragment,
-	type GiftCardFragment,
-} from "@/checkout/graphql";
+import { type OrderLineFragment, type CheckoutLineFragment, type GiftCardFragment } from "@/checkout/graphql";
 import { SummaryItemMoneySection } from "@/checkout/sections/Summary/SummaryItemMoneySection";
 
 interface SummaryProps {
@@ -28,22 +24,24 @@ interface SummaryProps {
 			currency: string;
 			amount: number;
 		};
-	},
+	};
 	subtotalPrice?: {
-			__typename?: "TaxedMoney";
-			gross: {
+		__typename?: "TaxedMoney";
+		gross: {
+			__typename?: "Money";
+			currency: string;
+			amount: number;
+		};
+	};
+	giftCards?: GiftCardFragment[];
+	voucherCode?: string | null;
+	discount?:
+		| {
 				__typename?: "Money";
 				currency: string;
 				amount: number;
-			};
-	}
-	giftCards?: GiftCardFragment[];
-	voucherCode?: string | null;
-	discount?: {
-		__typename?: "Money";
-		currency: string;
-		amount: number;
-	} | undefined;
+		  }
+		| undefined;
 	shippingPrice: {
 		__typename?: "TaxedMoney";
 		gross: {
@@ -51,7 +49,7 @@ interface SummaryProps {
 			currency: string;
 			amount: number;
 		};
-	}
+	};
 }
 
 export const Summary: FC<SummaryProps> = ({

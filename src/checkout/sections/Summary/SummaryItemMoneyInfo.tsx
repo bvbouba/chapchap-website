@@ -2,17 +2,17 @@ import React from "react";
 import clsx from "clsx";
 import { Money } from "@/checkout/components";
 import { getFormattedMoney } from "@/checkout/lib/utils/money";
-import { MoneyFragment } from "@/gql/graphql";
+import { type MoneyFragment } from "@/gql/graphql";
 
 interface SummaryItemMoneyInfoProps {
 	unitPrice: {
-        __typename?: "TaxedMoney";
-        gross: {
-            __typename?: "Money";
-            currency: string;
-            amount: number;
-        };
-    };
+		__typename?: "TaxedMoney";
+		gross: {
+			__typename?: "Money";
+			currency: string;
+			amount: number;
+		};
+	};
 	undiscountedUnitPrice: MoneyFragment;
 	quantity: number;
 }

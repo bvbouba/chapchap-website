@@ -14,16 +14,20 @@ export const ResetPassword: React.FC<ResetPasswordProps> = ({ onSectionChange, o
 
 	return (
 		<SignInFormContainer
-			title="Reset password"
-			redirectSubtitle="Remembered your password?"
-			redirectButtonLabel="Sign in"
+			title="Réinitialiser le mot de passe"
+			redirectSubtitle="Vous vous souvenez de votre mot de passe ?"
+			redirectButtonLabel="Se connecter"
 			onSectionChange={onSectionChange}
-			subtitle="Provide a new password for your account"
+			subtitle="Veuillez saisir un nouveau mot de passe pour votre compte"
 		>
 			<FormProvider form={form}>
-				<PasswordInput name="password" label="Password" required />
+				<PasswordInput name="password" label="Mot de passe" required />
 				<div className="mt-4 flex w-full flex-row items-center justify-end">
-					<Button ariaLabel="Reset password" label="Reset password" type="submit" />
+					<Button
+						ariaLabel="Réinitialiser le mot de passe"
+						label="Réinitialiser le mot de passe"
+						type="submit"
+					/>
 				</div>
 			</FormProvider>
 		</SignInFormContainer>

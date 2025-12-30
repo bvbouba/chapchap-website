@@ -1,20 +1,20 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import TripSearchForm, { FormValues } from "./form";
-import { useTripSearch } from "@/context/TripSearchContext";
-import { AssignedAttributeValueFragment } from "@/gql/graphql";
 import { useTransition } from "react";
+import { TripSearchForm, type FormValues } from "./form";
+import { useTripSearch } from "@/context/TripSearchContext";
+import { type AssignedAttributeValueFragment } from "@/gql/graphql";
 
 export type citiesType = {
 	departureCities: AssignedAttributeValueFragment[];
-    arrivalCities: AssignedAttributeValueFragment[];
-}
+	arrivalCities: AssignedAttributeValueFragment[];
+};
 interface props {
-	cities : citiesType
+	cities: citiesType;
 }
 
-export default function HeroSearch({cities}:props) {
+export const HeroSearch = ({ cities }: props) => {
 	const router = useRouter();
 	const params = useParams<{ channel: string }>();
 	const { data } = useTripSearch();
@@ -25,7 +25,7 @@ export default function HeroSearch({cities}:props) {
 		return new Promise<void>((resolve) => {
 			startTransition(() => {
 				router.push(`/${params.channel}/trips/${values.origin.id}/${values.destination.id}`);
-				// Note: We don't resolve immediately because we want the spinner 
+				// Note: We don't resolve immediately because we want the spinner
 				// to stay until the next page is ready.
 				resolve();
 			});
@@ -50,9 +50,9 @@ export default function HeroSearch({cities}:props) {
 					</p>
 
 					{/* ✅ Reusable trip form */}
-					<TripSearchForm onSubmit={handleSearchSubmit} data={data} cities={cities} isPending={isPending}/>
+					<TripSearchForm onSubmit={handleSearchSubmit} data={data} cities={cities} isPending={isPending} />
 				</div>
 			</div>
 		</section>
 	);
-}
+};

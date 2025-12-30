@@ -3,20 +3,20 @@
 import { useEffect, useState, useTransition } from "react";
 import "dayjs/locale/fr";
 import { ChevronDown, ChevronUp, Plus, Minus } from "lucide-react";
+import { Arrow, BusIcon } from "../Svg";
 import { formatMoney } from "@/lib/utils";
-import { CheckoutErrorFragment, CheckoutFragment, MoneyFragment } from "@/gql/graphql";
+import { type CheckoutErrorFragment, type CheckoutFragment, type MoneyFragment } from "@/gql/graphql";
 import { getTripInformation } from "@/lib/attribute";
 import { ProductImageWrapper } from "@/ui/atoms/ProductImageWrapper";
 import { CheckoutLink } from "@/app/[channel]/(main)/cart/CheckoutLink";
 import { updateLineFromCheckout } from "@/actions/";
-import { Arrow, BusIcon } from "../Svg";
 import { useAvailability } from "@/context/AvailabilityGuardContext";
 
 interface CartProps {
 	checkout: CheckoutFragment;
 }
 
-export default function CartDetail({ checkout }: CartProps) {
+export const CartDetail = ({ checkout }: CartProps) => {
 	const [showPassengers, setShowPassengers] = useState(false);
 	const initialQty = checkout.lines?.[0]?.quantity ?? 1;
 	const [passengerCount, setPassengerCount] = useState<number>(initialQty);
@@ -31,7 +31,6 @@ export default function CartDetail({ checkout }: CartProps) {
 	const attributes = variant?.attributes || [];
 
 	const { checkAvailability } = useAvailability();
-
 
 	const {
 		departureCity,
@@ -48,13 +47,12 @@ export default function CartDetail({ checkout }: CartProps) {
 	const amount = price?.amount || 0;
 	const currency = price?.currency || "";
 
-
 	useEffect(() => {
 		if (checkout) {
 			checkAvailability(checkout);
 		}
 	}, [checkout, checkAvailability]);
-	
+
 	const handleQuantityUpdate = async (newQty: number) => {
 		if (!variant?.id || !checkout?.id) return;
 
@@ -211,4 +209,4 @@ export default function CartDetail({ checkout }: CartProps) {
 			</div>
 		</section>
 	);
-}
+};
