@@ -2,7 +2,7 @@ import React from "react";
 import { SummaryMoneyRow, type SummaryMoneyRowProps } from "./SummaryMoneyRow";
 import { IconButton } from "@/checkout/components/IconButton";
 import { RemoveIcon } from "@/checkout/ui-kit/icons";
-import { useCheckoutRemovePromoCodeMutation } from "@/checkout/graphql";
+import { LanguageCodeEnum, useCheckoutRemovePromoCodeMutation } from "@/checkout/graphql";
 import { useCheckout } from "@/checkout/hooks/useCheckout";
 import { isOrderConfirmationPage } from "@/checkout/lib/utils/url";
 
@@ -25,7 +25,7 @@ export const SummaryPromoCodeRow: React.FC<SummaryPromoCodeRowProps> = ({
 		const variables = promoCode ? { promoCode: promoCode } : { promoCodeId: promoCodeId as string };
 
 		void checkoutRemovePromoCode({
-			languageCode: "EN_US",
+			languageCode: LanguageCodeEnum.Fr,
 			checkoutId: checkout.id,
 			...variables,
 		});

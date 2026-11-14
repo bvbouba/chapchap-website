@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useState } from "react";
-import { ChevronLeft } from "lucide-react"; // 👈 import Lucide icon
+import { ChevronLeft } from "lucide-react";
 import { useCheckout } from "@/checkout/hooks/useCheckout";
 import { useUser } from "@/checkout/hooks/useUser";
 import { Contact } from "@/checkout/sections/Contact";
@@ -17,9 +17,18 @@ import { GuestBillingAddressSection } from "@/checkout/sections/GuestBillingAddr
 import { PaymentSection, PaymentSectionSkeleton } from "@/checkout/sections/PaymentSection";
 import { getQueryParams } from "@/checkout/lib/utils/url";
 import { CollapseSection } from "@/checkout/sections/CheckoutForm/CollapseSection";
-import { Stepper } from "@/ui/components/Stepper";
+import { formatCheckoutMoney, summarizeCheckoutPricing } from "@/checkout/lib/checkoutPricing";
 
-export const CheckoutForm = () => {
+type Props = {
+	onPassengerNamesChange?: (names: string[]) => void;
+};
+
+/**
+ * Same flow as the customer mobile app:
+ * 1) Contact + passengers → save
+ * 2) Paystack Mobile Money payment UI
+ */
+export const CheckoutForm = ({ onPassengerNamesChange }: Props) => {
 	const { user } = useUser();
 	const { checkout } = useCheckout();
 	const { passwordResetToken } = getQueryParams();
@@ -27,42 +36,47 @@ export const CheckoutForm = () => {
 	const [currentStep, setCurrentStep] = useState(1);
 	const [showOnlyContact, setShowOnlyContact] = useState(!!passwordResetToken);
 
-	const totalSteps = 2;
-	const handleNext = () => setCurrentStep((prev) => Math.min(prev + 1, totalSteps));
-	// const handleBack = () => setCurrentStep((prev) => Math.max(prev - 1, 1));
-	const handleBack = () => window.location.reload();
+	const pricing = summarizeCheckoutPricing(
+		checkout?.lines,
+		checkout?.totalPrice?.gross?.amount,
+	);
+	const totalLabel = formatCheckoutMoney(pricing.total, pricing.currency);
+
+	const handleNext = () => setCurrentStep(2);
+	const handleBack = () => setCurrentStep(1);
 
 	const isStep1 = currentStep === 1;
 	const isStep2 = currentStep === 2;
 
 	return (
 		<div className="flex w-full flex-col">
-			{/* 🔙 Back + Progress Bar Row */}
-			<div className="mb-6 flex w-full items-center justify-between">
-				{currentStep > 1 ? (
+			{isStep2 ? (
+				<div className="mb-4 flex items-center justify-between gap-3">
 					<button
+						type="button"
 						onClick={handleBack}
-						className="flex items-center font-medium text-gray-700 transition hover:text-gray-900"
+						className="inline-flex items-center gap-1 text-sm font-medium text-[#404040] transition hover:text-[#111111]"
 					>
-						<ChevronLeft className="mr-1 h-4 w-4" />
+						<ChevronLeft className="h-4 w-4" />
 						Retour
 					</button>
-				) : (
-					<div /> // placeholder to align layout
-				)}
+					<p className="text-sm font-semibold text-[#111111]">
+						Paiement sécurisé{totalLabel ? ` — ${totalLabel}` : ""}
+					</p>
+				</div>
+			) : null}
 
-				{/* 🟦 Progress Bar */}
-				<Stepper currentStep={currentStep} totalSteps={totalSteps}/>
-			</div>
-
-			{/* 🧾 Step 1 */}
-			{isStep1 && (
-				<div className="flex w-full flex-col rounded">
+			{isStep1 ? (
+				<div className="flex w-full flex-col">
 					<Suspense fallback={<ContactSkeleton />}>
-						<Contact setShowOnlyContact={setShowOnlyContact} onContinueToPayment={handleNext} />
+						<Contact
+							setShowOnlyContact={setShowOnlyContact}
+							onContinueToPayment={handleNext}
+							onPassengerNamesChange={onPassengerNamesChange}
+						/>
 					</Suspense>
 
-					{checkout?.isShippingRequired && (
+					{checkout?.isShippingRequired ? (
 						<Suspense fallback={<AddressSectionSkeleton />}>
 							<CollapseSection collapse={showOnlyContact}>
 								<Divider />
@@ -72,22 +86,21 @@ export const CheckoutForm = () => {
 								{user ? <UserBillingAddressSection /> : <GuestBillingAddressSection />}
 							</CollapseSection>
 						</Suspense>
-					)}
+					) : null}
 
 					<Suspense fallback={<DeliveryMethodsSkeleton />}>
 						<DeliveryMethods collapsed={showOnlyContact} />
 					</Suspense>
 				</div>
-			)}
+			) : null}
 
-			{/* 💳 Step 2 */}
-			{isStep2 && (
-				<div className="flex w-full flex-col rounded">
+			{isStep2 ? (
+				<div className="flex w-full flex-col">
 					<Suspense fallback={<PaymentSectionSkeleton />}>
 						<PaymentSection />
 					</Suspense>
 				</div>
-			)}
+			) : null}
 		</div>
 	);
 };

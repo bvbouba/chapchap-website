@@ -18,21 +18,23 @@ export default function FilterPills({ pills, onRemoveAttribute, onClearFilters }
 	if (pills.length === 0) return null;
 
 	return (
-		<div className="my-4 flex flex-wrap items-center gap-2">
+		<div className="flex flex-wrap items-center gap-2">
 			{pills.map(({ label, attributeSlug, choiceSlug }) => (
 				<button
 					key={`${attributeSlug}-${choiceSlug}`}
+					type="button"
 					onClick={() => onRemoveAttribute(attributeSlug, choiceSlug)}
-					className="flex items-center gap-1 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700 transition hover:bg-gray-100"
+					className="inline-flex items-center gap-1.5 rounded-full border border-[#E2E3E7] bg-white px-3 py-1.5 text-xs font-medium text-[#303030] transition hover:border-[#EB1700] hover:text-[#EB1700]"
 				>
-					<span>{label}</span>
-					<X size={14} className="text-gray-500 hover:text-gray-700" />
+					<span>{label.includes(": ") ? label.split(": ").slice(1).join(": ") : label}</span>
+					<X size={12} className="text-[#9CA3AF]" />
 				</button>
 			))}
 
 			<button
+				type="button"
 				onClick={onClearFilters}
-				className="ml-2 rounded-md border border-primary px-3 py-1.5 text-sm text-primary   transition hover:bg-primary hover:text-white"
+				className="text-xs font-semibold text-[#EB1700] underline"
 			>
 				Tout effacer
 			</button>

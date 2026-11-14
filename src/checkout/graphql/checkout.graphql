@@ -148,6 +148,7 @@ fragment CheckoutLineFragment on CheckoutLine {
 		}
 		product {
 			name
+			slug
 			translation(languageCode: $languageCode) {
 				language {
 					code
@@ -337,8 +338,8 @@ mutation checkoutRemovePromoCode(
 	}
 }
 
-mutation checkoutComplete($checkoutId: ID!) {
-	checkoutComplete(id: $checkoutId) {
+mutation checkoutComplete($checkoutId: ID!, $metadata: [MetadataInput!]) {
+	checkoutComplete(id: $checkoutId, metadata: $metadata) {
 		errors {
 			...CheckoutErrorFragment
 		}

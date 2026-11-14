@@ -1,6 +1,5 @@
 import React, { useState, useTransition } from "react";
-import PhoneInput from "react-phone-input-2";
-import "react-phone-input-2/lib/style.css";
+import { CheckoutPhoneInput } from "@/checkout/components/CheckoutPhoneInput";
 import { isValidPhoneNumber } from "libphonenumber-js";
 import clsx from "clsx";
 import { Button } from "@/checkout/components/Button";
@@ -48,7 +47,7 @@ export const SignIn: React.FC<SignInProps> = ({
 	// Logic for virtual email used by Saleor
 	const getVirtualEmail = (rawPhone: string) => {
 		const formatted = rawPhone.startsWith("+") ? rawPhone : `+${rawPhone}`;
-		return `${formatted}@chapchaptickets.com`;
+		return `${formatted}@chapchapticket.com`;
 	};
 
 	const phoneError = touched.email ? (errors.email as string) : undefined;
@@ -137,11 +136,10 @@ export const SignIn: React.FC<SignInProps> = ({
 									Numéro de téléphone <span aria-hidden="true">*</span>
 								</span>
 								<div className="mt-0.5">
-									<PhoneInput
-										country={"ci"}
-										onlyCountries={["ci", "ca"]}
+									<CheckoutPhoneInput
 										value={phone}
 										placeholder=""
+										error={!!phoneError}
 										onChange={(val) => {
 											setPhone(val);
 											const virtualEmail = getVirtualEmail(val);
@@ -155,6 +153,13 @@ export const SignIn: React.FC<SignInProps> = ({
 										)}
 										buttonClass="!border-neutral-300 !rounded-l-md !bg-white"
 										specialLabel=""
+										inputStyle={{
+											height: "42px",
+											borderRadius: "0.375rem",
+										}}
+										buttonStyle={{
+											borderRadius: "0.375rem 0 0 0.375rem",
+										}}
 									/>
 								</div>
 							</label>

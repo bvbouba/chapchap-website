@@ -1,6 +1,6 @@
 import { type CountryCode } from "@/checkout/graphql";
 
-export const countries: CountryCode[] = [
+export const countries = [
 	"AF",
 	"AL",
 	"DZ",
@@ -251,6 +251,6 @@ export const countries: CountryCode[] = [
 	"ZM",
 	"ZW",
 	"AX",
-];
+] as CountryCode[];
 
 export const defaultCountry = countries[0];

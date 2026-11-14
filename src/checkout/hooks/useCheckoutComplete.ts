@@ -2,6 +2,8 @@ import { useMemo } from "react";
 import { useCheckoutCompleteMutation } from "@/checkout/graphql";
 import { useCheckout } from "@/checkout/hooks/useCheckout";
 import { useSubmit } from "@/checkout/hooks/useSubmit";
+import { generateShortCode } from "@/checkout/lib/generateShortCode";
+import { awaitingGuichetMetadataInput } from "@/lib/bookingStatus";
 import { replaceUrl } from "@/checkout/lib/utils/url";
 
 export const useCheckoutComplete = () => {
@@ -13,9 +15,16 @@ export const useCheckoutComplete = () => {
 	const onCheckoutComplete = useSubmit<{}, typeof checkoutComplete>(
 		useMemo(
 			() => ({
-				parse: () => ({
-					checkoutId,
-				}),
+				parse: () => {
+					const code = generateShortCode(checkoutId);
+					return {
+						checkoutId,
+						metadata: [
+							{ key: "confirmation_code", value: code },
+							...awaitingGuichetMetadataInput(),
+						],
+					};
+				},
 				onSubmit: checkoutComplete,
 				onSuccess: ({ data }) => {
 					const order = data.order;

@@ -1,18 +1,24 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import PhoneInput from "react-phone-input-2";
-import "react-phone-input-2/lib/style.css";
-import { useRouter } from "next/navigation";
+import { Suspense, useState, useTransition } from "react";
+import { CheckoutPhoneInput } from "@/checkout/components/CheckoutPhoneInput";
+import { useRouter, useSearchParams } from "next/navigation";
 import { isValidPhoneNumber } from "libphonenumber-js";
 import { LinkWithChannel } from "../atoms/LinkWithChannel";
 import { loginSubmit } from "@/actions";
 
-export function LoginForm() {
+function safeRedirectPath(value: string | null | undefined): string {
+	if (!value || !value.startsWith("/") || value.startsWith("//")) return "/";
+	return value;
+}
+
+function LoginFormInner() {
 	const [isPending, startTransition] = useTransition();
 	const [error, setError] = useState<string | null>(null);
 	const [phone, setPhone] = useState("");
 	const router = useRouter();
+	const searchParams = useSearchParams();
+	const redirectTo = safeRedirectPath(searchParams.get("redirect"));
 
 	async function handleLogin(formData: FormData) {
 		const fullPhone = phone.startsWith("+") ? phone : `+${phone}`;
@@ -30,7 +36,7 @@ export function LoginForm() {
 			return;
 		}
 
-		const virtualEmail = `${fullPhone}@chapchaptickets.com`;
+		const virtualEmail = `${fullPhone}@chapchapticket.com`;
 
 		startTransition(async () => {
 			try {
@@ -38,7 +44,7 @@ export function LoginForm() {
 				if (result.errors && result.errors.length > 0) {
 					setError("Veuillez saisir des identifiants valides");
 				} else {
-					router.push("/");
+					router.push(redirectTo);
 					router.refresh();
 				}
 			} catch (err) {
@@ -55,13 +61,13 @@ export function LoginForm() {
 				<form action={handleLogin} className="space-y-4">
 					<div>
 						<label className="mb-2 block text-sm font-medium text-gray-700">Numéro de téléphone</label>
-						<PhoneInput
-							country={"ci"}
-							onlyCountries={["ci", "ca"]}
+						<CheckoutPhoneInput
 							value={phone}
 							onChange={(val) => setPhone(val)}
 							containerClass="w-full"
 							inputClass="!w-full !h-[42px] !rounded !border-gray-300 !bg-neutral-50"
+							inputStyle={{ height: "42px", borderRadius: "0.25rem" }}
+							buttonStyle={{ borderRadius: "0.25rem 0 0 0.25rem" }}
 						/>
 					</div>
 
@@ -102,7 +108,6 @@ export function LoginForm() {
 				</form>
 
 				<div className="mt-8 text-center text-sm text-gray-600">
-					{/* ✅ Correction de l'apostrophe ici */}
 					Vous n&apos;avez pas de compte ?{" "}
 					<LinkWithChannel href="/account/signup" className="font-bold text-orange-600 hover:text-orange-500">
 						Créer un compte
@@ -110,5 +115,13 @@ export function LoginForm() {
 				</div>
 			</div>
 		</div>
+	);
+}
+
+export function LoginForm() {
+	return (
+		<Suspense fallback={<div className="mx-auto mt-16 max-w-lg px-4 text-center text-neutral-500">Chargement…</div>}>
+			<LoginFormInner />
+		</Suspense>
 	);
 }

@@ -1,29 +1,49 @@
-// src/actions/addToCart.ts
 "use server";
 
 import { revalidatePath } from "next/cache";
 import { invariant } from "ts-invariant";
 import * as Checkout from "@/lib/checkout";
 import { executeGraphQL } from "@/lib/graphql";
-import { CheckoutAddLineDocument } from "@/gql/graphql";
-import { deleteLineFromCheckout } from "@/app/[channel]/(main)/cart/actions";
+import { CheckoutAddLineDocument, CheckoutDeleteLinesDocument } from "@/gql/graphql";
 
 /**
- * Server action to add a product variant to the user's checkout.
+ * Add a trip variant to checkout on the **operator** channel (same as mobile).
+ * Faster and correct stock vs creating the cart on the marketplace channel.
  */
-export async function addToCartAction({ channel, variantId }: { channel: string; variantId: string }) {
+export async function addToCartAction({
+	channel,
+	operatorChannelSlug,
+	variantId,
+}: {
+	/** URL / marketplace channel (fallback if operator slug missing). */
+	channel: string;
+	/** Operator channel from bus-operator attribute — preferred checkout channel. */
+	operatorChannelSlug?: string;
+	variantId: string;
+}) {
+	const checkoutChannel = (operatorChannelSlug || channel).trim();
+	invariant(checkoutChannel, "Missing checkout channel");
+	if (!variantId) return;
+
 	const checkout = await Checkout.findOrCreate({
-		checkoutId: await Checkout.getIdFromCookies(channel),
-		channel,
+		checkoutId: await Checkout.getIdFromCookies(checkoutChannel),
+		channel: checkoutChannel,
 	});
 
 	invariant(checkout, "Checkout could not be created");
 
-	await Checkout.saveIdToCookie(channel, checkout.id);
+	await Checkout.saveIdToCookie(checkoutChannel, checkout.id);
 
-	checkout.lines.map((line) => deleteLineFromCheckout({ lineId: line.id, checkoutId: checkout.id }));
-
-	if (!variantId) return;
+	const lineIds = checkout.lines.map((line) => line.id).filter(Boolean);
+	if (lineIds.length > 0) {
+		await executeGraphQL(CheckoutDeleteLinesDocument, {
+			variables: {
+				checkoutId: checkout.id,
+				lineIds,
+			},
+			cache: "no-cache",
+		});
+	}
 
 	const { checkoutLinesAdd } = await executeGraphQL(CheckoutAddLineDocument, {
 		variables: {
@@ -32,9 +52,12 @@ export async function addToCartAction({ channel, variantId }: { channel: string;
 		},
 		cache: "no-cache",
 	});
-	revalidatePath("/cart");
+
+	revalidatePath(`/${checkoutChannel}/cart`);
+
 	return {
 		checkout: checkoutLinesAdd?.checkout,
 		errors: checkoutLinesAdd?.errors,
+		checkoutChannel,
 	};
 }

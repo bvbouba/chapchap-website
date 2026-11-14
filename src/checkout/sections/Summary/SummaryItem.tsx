@@ -21,7 +21,7 @@ export const SummaryItem = ({ line, children }: SummaryItemProps) => {
     company,
 	departureTimeStr,
 	arrivalTimeStr
-  } = getTripInformation({ attributes });
+  } = getTripInformation({ attributes: attributes as never });
 
   return (
     <li

@@ -28,17 +28,33 @@ import { getServerAuthClient } from "@/app/config";
 
 export async function getAllCities() {
 	try {
-		const { attribute: attribute1 } = await executeGraphQL(GetAttributeBySlugDocument, {
-			variables: { slug: "departure-city" },
-		});
+		const fetchCities = async (slug: "departure-city" | "arrival-city") => {
+			let lastError: unknown;
 
-		const departureCities = mapEdgesToItems(attribute1?.choices);
+			for (let attempt = 0; attempt < 3; attempt += 1) {
+				try {
+					const { attribute } = await executeGraphQL(GetAttributeBySlugDocument, {
+						variables: { slug },
+						withAuth: false,
+						revalidate: 60 * 60,
+					});
+					return mapEdgesToItems(attribute?.choices);
+				} catch (error) {
+					lastError = error;
+					if (attempt < 2) {
+						await new Promise((resolve) => setTimeout(resolve, 250 * (attempt + 1)));
+					}
+				}
+			}
 
-		const { attribute: attribute2 } = await executeGraphQL(GetAttributeBySlugDocument, {
-			variables: { slug: "arrival-city" },
-		});
+			throw lastError;
+		};
 
-		const arrivalCities = mapEdgesToItems(attribute2?.choices);
+		const [departureCities, arrivalCities] = await Promise.all([
+			fetchCities("departure-city"),
+			fetchCities("arrival-city"),
+		]);
+
 		return {
 			departureCities,
 			arrivalCities,

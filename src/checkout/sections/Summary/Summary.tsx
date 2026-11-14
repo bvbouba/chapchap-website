@@ -1,13 +1,19 @@
-import { type FC } from "react";
+"use client";
+
+import { type FC, useMemo } from "react";
 import clsx from "clsx";
-import { SummaryItem, type SummaryLine } from "./SummaryItem";
+import { Lock, Zap } from "lucide-react";
 import { PromoCodeAdd } from "./PromoCodeAdd";
 import { SummaryPromoCodeRow } from "./SummaryPromoCodeRow";
-import { SummaryItemMoneyEditableSection } from "./SummaryItemMoneyEditableSection";
-
-import { Divider, Money, Title } from "@/checkout/components";
-import { type OrderLineFragment, type CheckoutLineFragment, type GiftCardFragment } from "@/checkout/graphql";
-import { SummaryItemMoneySection } from "@/checkout/sections/Summary/SummaryItemMoneySection";
+import { Divider, Title } from "@/checkout/components";
+import { type GiftCardFragment } from "@/checkout/graphql";
+import { getTripInformation } from "@/lib/attribute";
+import {
+	formatCheckoutMoney,
+	getCheckoutTripLines,
+	summarizeCheckoutPricing,
+} from "@/checkout/lib/checkoutPricing";
+import { type SummaryLine } from "./SummaryItem";
 
 interface SummaryProps {
 	editable?: boolean;
@@ -19,7 +25,7 @@ interface SummaryProps {
 			currency: string;
 			amount: number;
 		};
-		tax: {
+		tax?: {
 			__typename?: "Money";
 			currency: string;
 			amount: number;
@@ -42,7 +48,7 @@ interface SummaryProps {
 				amount: number;
 		  }
 		| undefined;
-	shippingPrice: {
+	shippingPrice?: {
 		__typename?: "TaxedMoney";
 		gross: {
 			__typename?: "Money";
@@ -50,6 +56,8 @@ interface SummaryProps {
 			amount: number;
 		};
 	};
+	/** Live passenger names from the form (optional). */
+	passengerNames?: string[];
 }
 
 export const Summary: FC<SummaryProps> = ({
@@ -59,72 +67,157 @@ export const Summary: FC<SummaryProps> = ({
 	giftCards = [],
 	voucherCode,
 	discount,
+	passengerNames = [],
 }) => {
+	const tripLines = useMemo(() => getCheckoutTripLines(lines), [lines]);
+	const tripLine = tripLines[0];
+	const attributes = tripLine?.variant?.attributes || [];
+
+	const {
+		departureCity,
+		arrivalCity,
+		company,
+		departureTimeStr,
+		arrivalTimeStr,
+		formattedDate,
+		departureStation,
+		arrivalStation,
+	} = getTripInformation({ attributes: attributes as never });
+
+	const pricing = summarizeCheckoutPricing(lines, totalPrice?.gross?.amount);
+	const {
+		passengerCount,
+		ticketAmount,
+		feeAmount,
+		unitAmount,
+		currency,
+		total,
+	} = pricing;
+
+	const namedPassengers = passengerNames.filter(Boolean);
+
 	return (
-		<div
+		<aside
 			className={clsx(
-				"z-0 flex h-fit w-full flex-col",
-				"before:fixed before:bottom-0 before:left-1/2 before:top-0 before:-z-10 before:w-1/2 before:border-l before:border-neutral-200 before:bg-neutral-50 before:content-none before:lg:content-['']",
+				"z-0 flex h-fit w-full flex-col rounded-2xl border border-[#E8E9EC] bg-[#FAFAFA] p-5 sm:p-6",
+				"lg:sticky lg:top-6",
 			)}
 		>
-			<details open className="group">
-				<summary className="-mb-2 flex cursor-pointer flex-row items-center">
-					<Title className="text-xl">Résumé du voyage</Title>
-					{/* <ChevronDownIcon className="mb-2 group-open:rotate-180" /> */}
-				</summary>
-				<ul className="py-2" data-testid="SummaryProductList">
-					{lines.map((line) => (
-						<SummaryItem line={line} key={line?.id}>
-							{editable ? (
-								<SummaryItemMoneyEditableSection line={line as CheckoutLineFragment} />
-							) : (
-								<SummaryItemMoneySection line={line as OrderLineFragment} />
-							)}
-						</SummaryItem>
-					))}
-				</ul>
-			</details>
-			{editable && (
-				<>
-					<PromoCodeAdd />
-					<Divider />
-				</>
-			)}
-			<div className="mt-4 flex max-w-full flex-col">
-				{/* <SummaryMoneyRow label="Subtotal" money={subtotalPrice?.gross} ariaLabel="subtotal price" /> */}
-				{voucherCode && (
-					<SummaryPromoCodeRow
-						editable={editable}
-						promoCode={voucherCode}
-						ariaLabel="voucher"
-						label={`Voucher code: ${voucherCode}`}
-						money={discount}
-						negative
-					/>
+			<Title className="!mb-4 text-lg font-bold text-[#111111]">Résumé de la commande</Title>
+
+			<div className="rounded-xl border border-[#E8E9EC] bg-white p-4">
+				<p className="text-base font-bold text-[#111111]">
+					{departureCity || "Départ"} → {arrivalCity || "Arrivée"}
+				</p>
+				<p className="mt-1 text-sm text-[#606060]">
+					{[formattedDate, [departureTimeStr, arrivalTimeStr].filter(Boolean).join(" – ")]
+						.filter(Boolean)
+						.join(" · ")}
+				</p>
+				{company ? (
+					<p className="mt-1 text-sm text-[#505050]">
+						Compagnie : <span className="font-medium text-[#303030]">{company}</span>
+					</p>
+				) : null}
+				{(departureStation || arrivalStation) && (
+					<p className="mt-2 text-xs leading-5 text-[#808080]">
+						{(departureStation || "").split(",")[0]} → {(arrivalStation || "").split(",")[0]}
+					</p>
 				)}
-				{giftCards.map(({ currentBalance, displayCode, id }) => (
-					<SummaryPromoCodeRow
-						key={id}
-						editable={editable}
-						promoCodeId={id}
-						ariaLabel="gift card"
-						label={`Gift Card: •••• •••• ${displayCode}`}
-						money={currentBalance}
-						negative
-					/>
-				))}
-				{/* <SummaryMoneyRow label="Shipping cost" ariaLabel="shipping cost" money={shippingPrice?.gross} /> */}
-				<Divider className="my-4" />
-				<div className="flex flex-row items-baseline justify-between pb-4">
-					<div className="flex flex-row items-baseline">
-						<p className="">Total du voyage</p>
-						{/* <p color="secondary" className="ml-2">
-							includes {getFormattedMoney(totalPrice?.tax)} tax
-						</p> */}
+			</div>
+
+			<div className="mt-4 border-t border-[#E8E9EC] pt-4">
+				<p className="text-sm font-semibold text-[#303030]">
+					{passengerCount} passager{passengerCount > 1 ? "s" : ""}
+				</p>
+				{namedPassengers.length > 0 ? (
+					<ul className="mt-2 space-y-1 text-sm text-[#606060]">
+						{namedPassengers.map((name, i) => (
+							<li key={`${name}-${i}`}>
+								• Passager {i + 1} : {name}
+							</li>
+						))}
+					</ul>
+				) : (
+					<p className="mt-1 text-xs text-[#9CA3AF]">Noms à renseigner dans le formulaire</p>
+				)}
+			</div>
+
+			<div className="mt-4 border-t border-[#E8E9EC] pt-4">
+				<p className="mb-3 text-sm font-semibold uppercase tracking-wide text-[#606060]">
+					Détail du prix
+				</p>
+				<dl className="space-y-2 text-sm">
+					<div className="flex items-start justify-between gap-3">
+						<dt className="text-[#505050]">
+							{passengerCount}x Billet{passengerCount > 1 ? "s" : ""}
+							{unitAmount > 0 ? (
+								<span className="mt-0.5 block text-xs text-[#9CA3AF]">
+									{formatCheckoutMoney(unitAmount, currency)} / un
+								</span>
+							) : null}
+						</dt>
+						<dd className="font-semibold text-[#111111]">
+							{formatCheckoutMoney(ticketAmount, currency)}
+						</dd>
 					</div>
-					<Money ariaLabel="total price" money={totalPrice?.gross} data-testid="totalOrderPrice" />
+					<div className="flex items-start justify-between gap-3">
+						<dt className="text-[#505050]">Frais de la plateforme</dt>
+						<dd className="font-semibold text-[#111111]">
+							{formatCheckoutMoney(feeAmount, currency)}
+						</dd>
+					</div>
+
+					{voucherCode ? (
+						<SummaryPromoCodeRow
+							editable={editable}
+							promoCode={voucherCode}
+							ariaLabel="voucher"
+							label={`Code promo : ${voucherCode}`}
+							money={discount}
+							negative
+						/>
+					) : null}
+					{giftCards.map(({ currentBalance, displayCode, id }) => (
+						<SummaryPromoCodeRow
+							key={id}
+							editable={editable}
+							promoCodeId={id}
+							ariaLabel="gift card"
+							label={`Avoir : •••• ${displayCode}`}
+							money={currentBalance}
+							negative
+						/>
+					))}
+				</dl>
+
+				<Divider className="my-3" />
+
+				<div className="flex items-baseline justify-between gap-3">
+					<p className="text-base font-bold text-[#111111]">Total à payer</p>
+					<p className="text-xl font-bold text-[#EB1700]" data-testid="totalOrderPrice">
+						{formatCheckoutMoney(total, currency)}
+					</p>
 				</div>
 			</div>
-		</div>
+
+			{editable ? (
+				<div className="mt-4">
+					<p className="mb-2 text-xs font-medium text-[#606060]">Code promo / Carte cadeau</p>
+					<PromoCodeAdd />
+				</div>
+			) : null}
+
+			<div className="mt-5 space-y-2 border-t border-[#E8E9EC] pt-4 text-xs text-[#606060]">
+				<p className="flex items-center gap-1.5">
+					<Lock className="h-3.5 w-3.5 text-[#A6C65A]" aria-hidden />
+					Paiement 100% sécurisé
+				</p>
+				<p className="flex items-center gap-1.5">
+					<Zap className="h-3.5 w-3.5 text-[#A6C65A]" aria-hidden />
+					Envoi instantané du billet par SMS & WhatsApp
+				</p>
+			</div>
+		</aside>
 	);
 };

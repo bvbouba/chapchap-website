@@ -1,0 +1,11 @@
+query ChannelCompanyBySlug($slug: String!) {
+	channel(slug: $slug) {
+		id
+		name
+		slug
+		metadata {
+			key
+			value
+		}
+	}
+}

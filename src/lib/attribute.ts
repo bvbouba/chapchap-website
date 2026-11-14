@@ -1,18 +1,49 @@
 import dayjs from "dayjs";
-import { type CheckoutFragment, type SelectedAttributeFragment } from "@/gql/graphql";
+import { type CheckoutFragment } from "@/gql/graphql";
 import "dayjs/locale/fr";
 dayjs.locale("fr");
 
-// Helper: get attribute value (name or value)
-
-export const getAttrValue = (attrs: SelectedAttributeFragment[], slug: string): string | undefined => {
-	const found = attrs.find((attr) => attr.attribute?.slug === slug);
-	return found?.values?.[0]?.name ?? found?.values?.[0]?.value ?? undefined;
+/** Loose attribute shape shared by storefront + checkout GraphQL fragments. */
+export type TripAttributeLike = {
+	attribute?: { slug?: string | null; name?: string | null } | null;
+	values?: Array<{
+		id?: string | null;
+		name?: string | null;
+		slug?: string | null;
+		value?: string | null;
+		dateTime?: string | null;
+	} | null> | null;
 };
 
-export const getAtrrValueID = (attrs: SelectedAttributeFragment[], slug: string): string | undefined => {
+// Helper: get attribute value (name or value)
+
+export const getAttrValue = (attrs: TripAttributeLike[], slug: string): string | undefined => {
+	const found = attrs.find((attr) => attr.attribute?.slug === slug);
+	const value = found?.values?.[0];
+	if (!value) return undefined;
+	return value.dateTime ?? value.name ?? value.value ?? undefined;
+};
+
+export const getAtrrValueID = (attrs: TripAttributeLike[], slug: string): string | undefined => {
 	const found = attrs.find((attr) => attr.attribute?.slug === slug);
 	return found?.values?.[0]?.id ?? undefined;
+};
+
+/**
+ * Channel slug of the operator selling this trip = slug of the "bus-operator"
+ * attribute value on the variant.
+ */
+export const getOperatorChannelSlug = (
+	attrs:
+		| Array<{
+				attribute?: { slug?: string | null } | null;
+				values?: Array<{ slug?: string | null } | null> | null;
+		  } | null>
+		| null
+		| undefined,
+): string | undefined => {
+	const found = attrs?.find((attr) => attr?.attribute?.slug === "bus-operator");
+	return found?.values?.[0]?.slug ?? undefined;
 };
 
 // Parse duration string into total minutes
@@ -54,7 +85,7 @@ export const formatTimeUTC = (d: Date) =>
 		hour12: false,
 	});
 
-export const getTripInformation = ({ attributes }: { attributes: SelectedAttributeFragment[] }) => {
+export const getTripInformation = ({ attributes }: { attributes: TripAttributeLike[] }) => {
 	const durationRaw = getAttrValue(attributes, "estimated-duration");
 	const company = getAttrValue(attributes, "bus-operator");
 	const departureCity = getAttrValue(attributes, "departure-city");
@@ -86,6 +117,8 @@ export const getTripInformation = ({ attributes }: { attributes: SelectedAttribu
 		departureTimeStr,
 		formattedDate,
 		arrivalTimeStr,
+		departureDate,
+		durationMinutes,
 	};
 };
 

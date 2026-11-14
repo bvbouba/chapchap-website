@@ -5,6 +5,10 @@ query ChannelsList {
 		slug
 		isActive
 		currencyCode
+		metadata {
+			key
+			value
+		}
 		countries {
 			country
 			code

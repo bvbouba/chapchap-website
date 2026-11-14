@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { useCallback } from "react";
 import { type CombinedError } from "urql";
+import { LanguageCodeEnum } from "@/checkout/graphql";
 import { useAlerts } from "@/checkout/hooks/useAlerts";
 import { useCheckout } from "@/checkout/hooks/useCheckout";
 import {
@@ -94,7 +95,7 @@ export const useSubmit = <
 			setCheckoutUpdateState("loading");
 
 			const commonData: CommonVars = {
-				languageCode: "EN_US",
+				languageCode: LanguageCodeEnum.Fr,
 				channel: checkout.channel.slug,
 				checkoutId: checkout.id,
 			};

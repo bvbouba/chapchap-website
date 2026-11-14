@@ -1,7 +1,7 @@
 query CurrentUserOrderList {
 	me {
 		...UserDetails
-		orders(first: 10) {
+		orders(first: 50) {
 			edges {
 				node {
 					...OrderDetails

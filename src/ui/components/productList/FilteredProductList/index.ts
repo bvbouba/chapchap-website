@@ -1,2 +1,2 @@
 export * from "./FilteredProductList";
-export { default } from "./FilteredProductList";
+export { FilteredProductList as default } from "./FilteredProductList";

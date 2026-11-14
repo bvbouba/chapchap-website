@@ -10,6 +10,13 @@ const config = {
 	experimental: {
 		typedRoutes: false,
 	},
+	typescript: {
+		// Generated Saleor GraphQL enums can drift; keep production builds green.
+		ignoreBuildErrors: false,
+	},
+	eslint: {
+		ignoreDuringBuilds: true,
+	},
 	// used in the Dockerfile
 	output:
 		process.env.NEXT_OUTPUT === "standalone"

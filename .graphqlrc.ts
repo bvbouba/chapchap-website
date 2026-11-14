@@ -21,6 +21,8 @@ const config: CodegenConfig = {
 	overwrite: true,
 	schema: schemaUrl,
 	documents: "src/graphql/**/*.graphql",
+	// Avoid graphql-codegen "concurrency: 0" crash on some Node/pnpm setups
+	hooks: {},
 	generates: {
 		"src/gql/": {
 			preset: "client",

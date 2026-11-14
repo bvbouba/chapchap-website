@@ -1,6 +1,7 @@
 import { getAllCities } from "@/actions";
 import { GetAttributeValueByIdDocument } from "@/gql/graphql";
 import { executeGraphQL } from "@/lib/graphql";
+import { loadOperatorCardMetaMap } from "@/lib/loadOperatorLogoMap";
 import { getTransformedAttributes } from "@/lib/transformAttributes";
 import { FilteredProductList } from "@/ui/components/productList/FilteredProductList";
 
@@ -14,21 +15,20 @@ interface PageParams {
 	origin: string;
 }
 
-// ✅ Define SearchParams to capture the date
 interface PageSearchParams {
 	date?: string;
 }
 
 export default async function Page(props: {
 	params: Promise<PageParams>;
-	searchParams: Promise<PageSearchParams>; // ✅ Extract searchParams
+	searchParams: Promise<PageSearchParams>;
 }) {
-	const { origin, destination } = await props.params;
-	const { date } = await props.searchParams; // ✅ Extract date
+	const { origin, destination, channel } = await props.params;
+	const { date } = await props.searchParams;
 
 	const cities = await getAllCities();
 
-	const [originRes, destinationRes] = await Promise.all([
+	const [originRes, destinationRes, operatorMeta] = await Promise.all([
 		executeGraphQL(GetAttributeValueByIdDocument, {
 			variables: { id: origin },
 			revalidate: 60,
@@ -37,6 +37,7 @@ export default async function Page(props: {
 			variables: { id: destination },
 			revalidate: 60,
 		}),
+		loadOperatorCardMetaMap(),
 	]);
 
 	const originData = originRes.attributeValue;
@@ -45,7 +46,7 @@ export default async function Page(props: {
 	const { attributes } = await getTransformedAttributes({
 		originSlug: originData?.slug || "",
 		destinationSlug: destinationData?.slug || "",
-		channel: "ci",
+		channel,
 	});
 
 	return (
@@ -54,7 +55,8 @@ export default async function Page(props: {
 			originData={originData}
 			destinationData={destinationData}
 			cities={cities}
-			selectedDate={date} // ✅ Pass the date here
+			selectedDate={date}
+			operatorMeta={operatorMeta}
 		/>
 	);
 }

@@ -1,7 +1,9 @@
 "use client";
+
 import { usePathname, useSearchParams } from "next/navigation";
 import { createContext, useContext, useState, type ReactNode, useEffect } from "react";
 import Image from "next/image";
+import { EllipsisLoader } from "@/ui/components/EllipsisLoader";
 
 type imageType = {
 	url: string;
@@ -10,13 +12,38 @@ type imageType = {
 
 interface LoadingState {
 	active: boolean;
-	companyLogo?: imageType; // ✅ Updated to use your type
+	companyLogo?: imageType;
+	companyName?: string;
+	destination?: string;
 }
 
 interface GlobalLoadingContextType {
 	isLoading: boolean;
 	loadingState: LoadingState;
-	setLoading: (active: boolean, companyLogo?: imageType) => void;
+	setLoading: (
+		active: boolean,
+		opts?: {
+			companyLogo?: imageType;
+			companyName?: string;
+			destination?: string;
+		},
+	) => void;
+}
+
+function buildSubtitle(companyName?: string, destination?: string): string {
+	const company = companyName?.trim();
+	const dest = destination?.trim();
+
+	if (dest && company) {
+		return `Réservation de votre siège pour ${dest} chez ${company}...`;
+	}
+	if (company) {
+		return `Nous bloquons votre siège chez ${company}...`;
+	}
+	if (dest) {
+		return `Réservation de votre siège pour ${dest}...`;
+	}
+	return "Réservation de votre siège en cours...";
 }
 
 const GlobalLoadingContext = createContext<GlobalLoadingContextType>({
@@ -32,8 +59,20 @@ export function GlobalLoadingProvider({ children }: { children: ReactNode }) {
 	const pathname = usePathname();
 	const searchParams = useSearchParams();
 
-	const setLoading = (active: boolean, companyLogo?: imageType) => {
-		setLoadingState({ active, companyLogo });
+	const setLoading = (
+		active: boolean,
+		opts?: {
+			companyLogo?: imageType;
+			companyName?: string;
+			destination?: string;
+		},
+	) => {
+		setLoadingState({
+			active,
+			companyLogo: opts?.companyLogo,
+			companyName: opts?.companyName,
+			destination: opts?.destination,
+		});
 	};
 
 	useEffect(() => {
@@ -42,58 +81,28 @@ export function GlobalLoadingProvider({ children }: { children: ReactNode }) {
 
 	return (
 		<GlobalLoadingContext.Provider value={{ isLoading: loadingState.active, loadingState, setLoading }}>
-			{loadingState.active && (
-				<div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/60 backdrop-blur-sm">
-					<div className="mx-4 flex w-full max-w-sm flex-col items-center rounded-2xl bg-white p-8 shadow-2xl">
-						{/* --- Animation Section --- */}
-						<div className="mb-8 flex w-full items-center justify-between px-2">
-							{/* Your Brand Logo */}
-							<div className="relative flex h-24 w-24 items-center justify-center rounded-full border-2 border-gray-100 bg-white p-2 shadow-sm">
-								<Image
-									src="/logo.png"
-									alt="ChapChap Tickets"
-									width={48}
-									height={48}
-									className="object-contain"
-								/>
-							</div>
-
-							{/* Animated Connection Dots */}
-							<div className="flex flex-1 items-center justify-center gap-2">
-								<span className="h-2 w-2 animate-bounce rounded-full bg-primary [animation-delay:-0.3s]" />
-								<span className="h-2 w-2 animate-bounce rounded-full bg-primary [animation-delay:-0.15s]" />
-								<span className="h-2 w-2 animate-bounce rounded-full bg-primary" />
-							</div>
-
-							{/* Partner Logo */}
-							<div className="relative flex h-24 w-24 items-center justify-center rounded-full border-2 border-gray-100 bg-gray-50 p-2 shadow-sm">
-								{loadingState.companyLogo?.url ? (
-									<Image
-										src={loadingState.companyLogo.url}
-										alt={loadingState.companyLogo.alt ?? "Partenaire"}
-										fill
-										className="object-contain p-2"
-									/>
-								) : (
-									<div className="h-8 w-8 animate-pulse text-gray-300">
-										<svg fill="currentColor" viewBox="0 0 24 24">
-											<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z" />
-										</svg>
-									</div>
-								)}
+			{loadingState.active ? (
+				<div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/50 px-7">
+					<div className="flex w-full max-w-[340px] flex-col items-center rounded-[20px] border border-[#E8E9EC] bg-white px-[22px] py-7 shadow-xl">
+						<div className="mb-4 flex h-[104px] w-[104px] items-center justify-center overflow-hidden rounded-[28px] border border-[#E8E9EC] bg-white">
+							<div className="relative h-[88px] w-[88px]">
+								<Image src="/logo.png" alt="ChapChap" fill className="object-contain p-2" priority />
 							</div>
 						</div>
 
-						{/* Text Feedback */}
-						<div className="text-center">
-							<p className="text-base font-bold text-gray-900">Vérification des places</p>
-							<p className="mt-2 text-sm text-gray-500">
-								Nous sécurisons votre trajet auprès de notre partenaire...
-							</p>
+						<div className="mb-4">
+							<EllipsisLoader color="#EB1700" dotSize={7} />
 						</div>
+
+						<p className="mb-2 text-center text-[17px] font-bold text-[#111111]">
+							Vérification de la disponibilité...
+						</p>
+						<p className="px-1 text-center text-sm leading-5 text-[#606060]">
+							{buildSubtitle(loadingState.companyName, loadingState.destination)}
+						</p>
 					</div>
 				</div>
-			)}
+			) : null}
 			{children}
 		</GlobalLoadingContext.Provider>
 	);

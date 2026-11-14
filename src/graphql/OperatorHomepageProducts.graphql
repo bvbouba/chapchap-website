@@ -1,0 +1,54 @@
+query OperatorHomepageProducts($channel: String!, $first: Int = 20) {
+	products(first: $first, channel: $channel) {
+		edges {
+			node {
+				id
+				name
+				slug
+				thumbnail(size: 256, format: WEBP) {
+					url
+					alt
+				}
+				pricing {
+					priceRange {
+						start {
+							gross {
+								amount
+								currency
+							}
+						}
+					}
+				}
+				attributes {
+					attribute {
+						name
+						slug
+						inputType
+					}
+					values {
+						id
+						name
+						slug
+						value
+					}
+				}
+				defaultVariant {
+					id
+					attributes {
+						attribute {
+							name
+							slug
+							inputType
+						}
+						values {
+							id
+							name
+							slug
+							value
+						}
+					}
+				}
+			}
+		}
+	}
+}

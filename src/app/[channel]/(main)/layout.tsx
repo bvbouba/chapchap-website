@@ -1,4 +1,4 @@
-import { type ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
 import { Footer } from "@/ui/components/Footer";
 import { Header } from "@/ui/components/Header";
 import { TripSearchProvider } from "@/context/TripSearchContext";
@@ -8,8 +8,8 @@ import { SessionTimerProvider } from "@/context/SessionTimerContext";
 import { AvailabilityProvider } from "@/context/AvailabilityGuardContext";
 
 export const metadata = {
-	title: "Saleor Storefront example",
-	description: "Starter pack for building performant e-commerce experiences with Saleor.",
+	title: "ChapChap Tickets",
+	description: "Réservez vos billets de bus en Côte d'Ivoire.",
 };
 
 export default async function RootLayout(props: {
@@ -19,20 +19,22 @@ export default async function RootLayout(props: {
 	const channel = (await props.params).channel;
 
 	return (
-		<GlobalLoadingProvider>
-			<SessionTimerProvider>
-			<TripSearchProvider>
-				<ProgressProvider>
-					<AvailabilityProvider>
-					<Header channel={channel} />
-					<div className="flex min-h-[calc(100dvh-64px)] flex-col">
-						<main className="flex-1">{props.children}</main>
-						<Footer channel={channel} />
-					</div>
-					</AvailabilityProvider>
-				</ProgressProvider>
-			</TripSearchProvider>
-			</SessionTimerProvider>
-		</GlobalLoadingProvider>
+		<Suspense fallback={null}>
+			<GlobalLoadingProvider>
+				<SessionTimerProvider>
+					<TripSearchProvider>
+						<ProgressProvider>
+							<AvailabilityProvider>
+								<Header channel={channel} />
+								<div className="flex min-h-[calc(100dvh-64px)] flex-col">
+									<main className="flex-1">{props.children}</main>
+									<Footer channel={channel} />
+								</div>
+							</AvailabilityProvider>
+						</ProgressProvider>
+					</TripSearchProvider>
+				</SessionTimerProvider>
+			</GlobalLoadingProvider>
+		</Suspense>
 	);
 }

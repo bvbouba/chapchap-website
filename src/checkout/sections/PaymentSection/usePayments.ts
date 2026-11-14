@@ -16,11 +16,21 @@ export const usePayments = () => {
 	const { onCheckoutComplete, completingCheckout } = useCheckoutComplete();
 
 	useEffect(() => {
-		// the checkout was already paid earlier, complete
+		// Gift-card / voucher fully covered checkouts (total 0) must be completed
+		// explicitly from the form — do not auto-complete here.
+		const due = checkout?.totalPrice?.gross?.amount ?? 0;
+		if (due <= 0) return;
+
+		// Only auto-complete when payment was actually captured/authorized (e.g. Paystack callback).
 		if (!completingCheckout && paidStatuses.includes(paymentStatus)) {
 			void onCheckoutComplete();
 		}
-	}, [completingCheckout, onCheckoutComplete, paymentStatus]);
+	}, [
+		checkout?.totalPrice?.gross?.amount,
+		completingCheckout,
+		onCheckoutComplete,
+		paymentStatus,
+	]);
 
 	return { fetching, availablePaymentGateways };
 };

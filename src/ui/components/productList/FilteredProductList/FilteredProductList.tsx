@@ -1,15 +1,16 @@
 "use client";
 
 import { queryTypes, useQueryState } from "next-usequerystate";
-import { useEffect, useState } from "react";
-
+import { useEffect, useMemo, useState } from "react";
+import { SlidersHorizontal } from "lucide-react";
 import dayjs from "dayjs";
 import { ProductCollection } from "../../ProductCollection";
-// ✅ Correction: Import nommé
 import { SimpleHeroSearch } from "../../HeroSearch/SimpleHeroSearch";
 import { UpcomingTripsSection } from "../../trips/UpcomingTripsSection";
+import { ResultsDateTabs } from "../../trips/ResultsDateTabs";
 import { SectionFilter } from "../../trips/SectionFilter";
-import { ProgressHeader } from "../../ProgressHeader";
+import { TripsFilterModal } from "../../trips/TripsFilterModal";
+import FilterPills from "./FilterPills";
 import { type citiesType } from "../../HeroSearch/HeroSearch";
 import {
 	getPillsData,
@@ -17,16 +18,24 @@ import {
 	serializeQueryAttributeFilters,
 	type UrlFilter,
 } from "./attributes";
-import { parseQuerySort, serializeQuerySort, type UrlSorting } from "./sorting";
-import { type FilterPill } from "./FilterPills";
+import {
+	getClientSortMode,
+	parseDeparturePeriods,
+	parseQuerySort,
+	serializeDeparturePeriods,
+	serializeQuerySort,
+	type ClientSortMode,
+	type DeparturePeriod,
+} from "./sorting";
 import {
 	type AssignedAttributeValueFragment,
 	type AttributeFilterFragment,
-	type OrderDirection,
-	type ProductVariantSortField,
+	OrderDirection,
+	ProductVariantSortField,
 	type ProductVariantWhereInput,
 } from "@/gql/graphql";
 import { useTripSearch } from "@/context/TripSearchContext";
+import { type OperatorCardMetaMap } from "@/lib/loadOperatorLogoMap";
 
 export interface FilteredProductListProps {
 	attributeFiltersData: AttributeFilterFragment[];
@@ -38,6 +47,7 @@ export interface FilteredProductListProps {
 	busOperatorName?: string;
 	cities: citiesType;
 	selectedDate?: string;
+	operatorMeta?: OperatorCardMetaMap;
 }
 
 export const FilteredProductList = ({
@@ -50,6 +60,7 @@ export const FilteredProductList = ({
 	selectedDate,
 	categoryIDs,
 	collectionIDs,
+	operatorMeta = {},
 }: FilteredProductListProps) => {
 	const [queryFilters, setQueryFilters] = useQueryState("filters", {
 		parse: parseQueryAttributeFilters,
@@ -57,59 +68,89 @@ export const FilteredProductList = ({
 		defaultValue: [],
 	});
 
-	const [, setItemsCounter] = useState(0);
+	const [itemsCounter, setItemsCounter] = useState(0);
+	const [filterOpen, setFilterOpen] = useState(false);
 
 	const [sortByQuery, setSortByQuery] = useQueryState("sortBy", {});
-
 	const sortBy = parseQuerySort(sortByQuery);
-	const setSortBy = (value: UrlSorting | undefined | null) => void setSortByQuery(serializeQuerySort(value));
+	const sortMode = getClientSortMode(sortBy, sortByQuery);
+
+	const [periodsQuery, setPeriodsQuery] = useQueryState("periods", {});
+	const periods = parseDeparturePeriods(periodsQuery);
 
 	const [inStockFilter] = useQueryState("inStock", queryTypes.boolean.withDefault(false));
-
 	const [productVariantsWhere, setProductVariantsWhere] = useState<ProductVariantWhereInput>();
-
-	const pills: FilterPill[] = getPillsData(queryFilters, attributeFiltersData);
-
+	const pills = getPillsData(queryFilters, attributeFiltersData);
 	const { data, setData } = useTripSearch();
+	const todayStr = useMemo(() => dayjs().format("YYYY-MM-DD"), []);
 
-	const today = dayjs();
+	const setSortMode = (mode: ClientSortMode) => {
+		if (mode === "earliest") {
+			void setSortByQuery("EARLIEST", { scroll: false, shallow: true });
+			return;
+		}
+		if (mode === "cheapest") {
+			void setSortByQuery(
+				serializeQuerySort({
+					field: ProductVariantSortField.Price,
+					direction: OrderDirection.Asc,
+				}),
+				{ scroll: false, shallow: true },
+			);
+			return;
+		}
+		void setSortByQuery(null, { scroll: false, shallow: true });
+	};
+
+	const togglePeriod = (period: DeparturePeriod) => {
+		const next = periods.includes(period)
+			? periods.filter((p) => p !== period)
+			: [...periods, period];
+		void setPeriodsQuery(serializeDeparturePeriods(next), { scroll: false, shallow: true });
+	};
 
 	useEffect(() => {
-		if (originData && destinationData) {
-			const todayStr = today.format("YYYY-MM-DD");
-			let validatedDate = todayStr;
+		if (!originData || !destinationData) return;
 
-			if (selectedDate) {
-				const dateOnly = selectedDate.split(/[ T]/)[0];
-				const parsedDate = dayjs(dateOnly);
-
-				if (parsedDate.isValid() && !parsedDate.isBefore(today, "day")) {
-					validatedDate = dateOnly;
-				}
+		let validatedDate = todayStr;
+		if (selectedDate) {
+			const dateOnly = selectedDate.split(/[ T]/)[0];
+			const parsedDate = dayjs(dateOnly);
+			if (parsedDate.isValid() && !parsedDate.isBefore(dayjs(todayStr), "day")) {
+				validatedDate = dateOnly;
 			}
+		}
 
+		const nextOrigin = {
+			id: originData.id ?? "",
+			name: originData.name ?? "",
+			slug: originData.slug ?? "",
+		};
+		const nextDestination = {
+			id: destinationData.id ?? "",
+			name: destinationData.name ?? "",
+			slug: destinationData.slug ?? "",
+		};
+
+		const routeChanged =
+			data?.origin.id !== nextOrigin.id || data?.destination.id !== nextDestination.id;
+		const dateMissing = !data?.date;
+		const urlDateDiffers = Boolean(selectedDate) && data?.date !== validatedDate && routeChanged;
+
+		if (!data || routeChanged || dateMissing || urlDateDiffers) {
 			setData({
 				tripType: data?.tripType ?? "oneway",
-				origin: {
-					id: originData.id ?? "",
-					name: originData.name ?? "",
-					slug: originData.slug ?? "",
-				},
-				destination: {
-					id: destinationData.id ?? "",
-					name: destinationData.name ?? "",
-					slug: destinationData.slug ?? "",
-				},
-				date: data?.date ?? validatedDate,
+				origin: nextOrigin,
+				destination: nextDestination,
+				date: routeChanged || dateMissing ? validatedDate : (data?.date ?? validatedDate),
 				query: {
-					origin: originData.slug ?? "",
-					destination: destinationData.slug ?? "",
-					date: data?.date ?? validatedDate,
+					origin: nextOrigin.slug,
+					destination: nextDestination.slug,
+					date: routeChanged || dateMissing ? validatedDate : (data?.date ?? validatedDate),
 				},
 			});
 		}
-		// ✅ Correction: Ajout des dépendances manquantes
-	}, [originData, destinationData, selectedDate, setData, data?.date, data?.tripType, today]);
+	}, [originData, destinationData, selectedDate, setData, todayStr, data]);
 
 	useEffect(() => {
 		setProductVariantsWhere({
@@ -159,10 +200,7 @@ export const FilteredProductList = ({
 		if (!existingFilter) {
 			void setQueryFilters(
 				[...queryFilters, { slug: attributeSlug, value: { slug: { oneOf: [choiceSlug] } } }],
-				{
-					scroll: false,
-					shallow: true,
-				},
+				{ scroll: false, shallow: true },
 			);
 			return;
 		}
@@ -175,13 +213,9 @@ export const FilteredProductList = ({
 	};
 
 	const clearFilters = async () => {
-		// ✅ Correction: await utilisé correctement ici car la fonction est async
-		await setQueryFilters(null, {
-			scroll: false,
-			shallow: true,
-		});
-		// Note: Si setInStockFilter ne retourne pas de promesse, enlevez le await ou utilisez void
-		void setSortBy(null);
+		await setQueryFilters(null, { scroll: false, shallow: true });
+		await setPeriodsQuery(null, { scroll: false, shallow: true });
+		void setSortByQuery(null, { scroll: false, shallow: true });
 	};
 
 	if (!productVariantsWhere || !data) {
@@ -189,6 +223,34 @@ export const FilteredProductList = ({
 	}
 
 	const displayUpcomingTrip = !!categoryIDs?.length;
+	const activeFilterCount = pills.length + periods.length + (sortMode !== "chaplist" ? 1 : 0);
+
+	const periodPills = periods.map((id) => {
+		const labels: Record<DeparturePeriod, string> = {
+			aube: "Aube",
+			matin: "Matin",
+			"apres-midi": "Après-midi",
+			soir: "Soir",
+		};
+		return {
+			label: labels[id],
+			choiceSlug: id,
+			attributeSlug: "__period__",
+		};
+	});
+
+	const allPills = [...pills, ...periodPills];
+
+	const filterProps = {
+		pills,
+		clearFilters,
+		attributeFiltersData,
+		addAttributeFilter,
+		sortMode,
+		onSortModeChange: setSortMode,
+		periods,
+		onTogglePeriod: togglePeriod,
+	};
 
 	return (
 		<>
@@ -202,38 +264,81 @@ export const FilteredProductList = ({
 					busOperatorName={busOperatorName}
 				/>
 			) : (
-				<ProgressHeader destinationName={data.destination.name} date={data.date} />
+				<ResultsDateTabs
+					originName={data.origin.name}
+					destinationName={data.destination.name}
+					tripCount={itemsCounter}
+				/>
 			)}
-			<div className="mt-4">
+
+			<div className="bg-[#FAFAFA]">
 				<section
-					className={`mx-auto flex w-full max-w-6xl gap-6 px-8 py-8 
-    ${!displayUpcomingTrip ? "flex-col md:flex-row" : "justify-center"}`}
+					className={`mx-auto flex w-full max-w-6xl gap-6 px-4 py-6 sm:px-8 ${
+						!displayUpcomingTrip ? "flex-col md:flex-row" : "justify-center"
+					}`}
 				>
-					{!displayUpcomingTrip && (
-						<SectionFilter
-							pills={pills}
-							clearFilters={clearFilters}
-							attributeFiltersData={attributeFiltersData}
-							addAttributeFilter={addAttributeFilter}
-						/>
-					)}
+					{!displayUpcomingTrip && <SectionFilter {...filterProps} />}
 
 					<ProductCollection
 						where={productVariantsWhere}
-						sortBy={sortBy || undefined}
+						sortBy={
+							sortMode === "cheapest"
+								? { field: ProductVariantSortField.Price, direction: OrderDirection.Asc }
+								: undefined
+						}
+						sortMode={sortMode}
+						periods={periods}
 						setCounter={setItemsCounter}
-						perPage={2}
+						perPage={10}
 						originSlug={data.query?.origin ?? "abidjan"}
 						destinationSlug={data.query?.destination ?? "yamoussoukro"}
-						date={data.query?.date ?? ""}
-						optionToggle={(field?: ProductVariantSortField, direction?: OrderDirection) => {
-							setSortBy(field && direction ? { field, direction } : null);
-						}}
+						date={data.query?.date ?? data.date ?? ""}
 						chosen={sortBy}
 						displayUpcomingTrip={displayUpcomingTrip}
+						operatorMeta={operatorMeta}
+						pillsSlot={
+							!displayUpcomingTrip && allPills.length > 0 ? (
+								<FilterPills
+									pills={allPills}
+									onRemoveAttribute={(attributeSlug, choiceSlug) => {
+										if (attributeSlug === "__period__") {
+											togglePeriod(choiceSlug as DeparturePeriod);
+											return;
+										}
+										removeAttributeFilter(attributeSlug, choiceSlug);
+									}}
+									onClearFilters={() => void clearFilters()}
+								/>
+							) : null
+						}
 					/>
 				</section>
 			</div>
+
+			{!displayUpcomingTrip ? (
+				<>
+					<button
+						type="button"
+						onClick={() => setFilterOpen(true)}
+						className="fixed bottom-5 left-1/2 z-40 flex -translate-x-1/2 items-center gap-2 rounded-full bg-[#111111] px-5 py-3 text-sm font-bold text-white shadow-lg md:hidden"
+					>
+						<SlidersHorizontal className="h-4 w-4" aria-hidden />
+						Filtrer & trier
+						{activeFilterCount > 0 ? (
+							<span className="ml-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#EB1700] px-1.5 text-[11px]">
+								{activeFilterCount}
+							</span>
+						) : null}
+					</button>
+
+					<TripsFilterModal
+						open={filterOpen}
+						onClose={() => setFilterOpen(false)}
+						{...filterProps}
+						resultCount={itemsCounter}
+					/>
+				</>
+			) : null}
 		</>
 	);
 };

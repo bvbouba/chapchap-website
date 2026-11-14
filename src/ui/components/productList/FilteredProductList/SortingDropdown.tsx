@@ -11,10 +11,11 @@ import { type OrderDirection, type ProductVariantSortField } from "@/gql/graphql
 export interface SortingDropdownProps {
 	optionToggle: (field?: ProductVariantSortField, direction?: OrderDirection) => void;
 	chosen: UrlSorting | null;
+	sortByQuery?: string | null;
 }
 
-export const SortingDropdown = ({ optionToggle, chosen }: SortingDropdownProps) => {
-	const options = getSortingOptions(chosen);
+export const SortingDropdown = ({ optionToggle, chosen, sortByQuery = null }: SortingDropdownProps) => {
+	const options = getSortingOptions(chosen, sortByQuery);
 	const [label, setLabel] = useState<string>("");
 
 	return (
@@ -23,7 +24,7 @@ export const SortingDropdown = ({ optionToggle, chosen }: SortingDropdownProps) 
 				<>
 					<div>
 						<Menu.Button
-							className="focus:ring-brand inline-flex w-60 items-center justify-between rounded-md border border-gray-200 bg-white px-4   py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2"
+							className="inline-flex w-56 items-center justify-between rounded-md border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2"
 							data-testid="sortBy"
 						>
 							{label ? `Trier par: ${label}` : "Trier"}

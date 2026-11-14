@@ -2,6 +2,24 @@ fragment OrderDetails on Order {
 	id
 	number
 	created
+	status
+	isPaid
+	customerNote
+	paymentStatus
+	paymentStatusDisplay
+	authorizeStatus
+	chargeStatus
+	metadata {
+		key
+		value
+	}
+	fulfillments {
+		id
+		status
+	}
+	billingAddress {
+		phone
+	}
 	total {
 		gross {
 			amount
@@ -9,9 +27,27 @@ fragment OrderDetails on Order {
 		}
 	}
 	lines {
+		id
+		quantity
+		totalPrice {
+			gross {
+				amount
+				currency
+			}
+		}
+		unitPrice {
+			gross {
+				amount
+				currency
+			}
+		}
 		variant {
 			id
 			name
+			metadata {
+				key
+				value
+			}
 			product {
 				id
 				name
@@ -34,8 +70,20 @@ fragment OrderDetails on Order {
 					}
 				}
 			}
+			attributes {
+				attribute {
+					name
+					slug
+					inputType
+				}
+				values {
+					name
+					slug
+					value
+					id
+					dateTime
+				}
+			}
 		}
-		quantity
 	}
-	paymentStatus
 }

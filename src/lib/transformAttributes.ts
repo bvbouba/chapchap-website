@@ -9,11 +9,11 @@ import { mapEdgesToItems } from "@/lib/maps";
 export async function getTransformedAttributes({
 	originSlug,
 	destinationSlug,
-	channel = "ci",
+	channel,
 }: {
 	originSlug: string;
 	destinationSlug: string;
-	channel?: string;
+	channel: string;
 }): Promise<{
 	attributes: AttributeFilterFragment[];
 }> {

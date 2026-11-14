@@ -26,7 +26,7 @@ export const getEmptyAddressFormData = (): AddressFormData => ({
 	countryArea: "",
 	postalCode: "",
 	phone: "",
-	countryCode: "US",
+	countryCode: "US" as CountryCode,
 });
 
 export const getEmptyAddress = (): AddressFragment => {
@@ -38,7 +38,7 @@ export const getEmptyAddress = (): AddressFragment => {
 		country: {
 			code: countryCode,
 			country: getCountryName(countryCode),
-		},
+		} as CountryDisplay,
 	};
 };
 
@@ -79,7 +79,7 @@ export const getAddressFormDataFromAddress = (address: OptionalAddress): Address
 	if (!address) {
 		return {
 			...getEmptyAddressFormData(),
-			countryCode: "US",
+			countryCode: "US" as CountryCode,
 		};
 	}
 

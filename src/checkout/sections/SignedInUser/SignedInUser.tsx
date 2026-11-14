@@ -9,6 +9,7 @@ interface SignedInUserProps extends Pick<SignInFormContainerProps, "onSectionCha
 	onSignOutSuccess: () => void;
 	onEmailChange: (email: string) => void;
 	onContinueToPayment?: () => void;
+	onPassengerNamesChange?: (names: string[]) => void;
 }
 
 export const SignedInUser: React.FC<SignedInUserProps> = ({
@@ -16,13 +17,13 @@ export const SignedInUser: React.FC<SignedInUserProps> = ({
 	onSignOutSuccess,
 	onEmailChange,
 	onContinueToPayment,
+	onPassengerNamesChange,
 }) => {
 	const { signOut } = useSaleorAuthContext();
 	const { user } = useUser();
 
 	return (
-		<SignInFormContainer title="Votre Compte" onSectionChange={onSectionChange}>
-			{/* ✅ Enhanced User Info Header showing Name and Phone */}
+		<SignInFormContainer title="Votre compte" onSectionChange={onSectionChange}>
 			<div className="mb-4 flex flex-col space-y-4 rounded-2xl border border-gray-100 bg-gray-50 p-5">
 				<div className="flex items-center justify-between">
 					<div>
@@ -47,12 +48,12 @@ export const SignedInUser: React.FC<SignedInUserProps> = ({
 				</div>
 			</div>
 
-			{/* ✅ Pass showPhoneInput={false} because user is already logged in */}
 			<ContactPassengerForm
 				onEmailChange={onEmailChange}
 				email={user?.email || ""}
 				onContinueToPayment={onContinueToPayment}
-				showPhoneInput={false}
+				onPassengerNamesChange={onPassengerNamesChange}
+				showPhoneInput={true}
 			/>
 		</SignInFormContainer>
 	);

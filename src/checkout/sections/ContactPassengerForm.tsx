@@ -1,51 +1,71 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
-import PhoneInput from "react-phone-input-2";
-import "react-phone-input-2/lib/style.css";
+import { useEffect, useMemo, useState } from "react";
+import { ChevronDownIcon, ChevronUpIcon, Lock } from "lucide-react";
 import { isValidPhoneNumber } from "libphonenumber-js";
 
 import { FormProvider } from "../hooks/useForm/FormProvider";
 import { type Passenger, useGuestUserForm } from "./GuestUser/useGuestUserForm";
 import { TextInput } from "@/checkout/components/TextInput";
+import { CheckoutPhoneInput } from "@/checkout/components/CheckoutPhoneInput";
+import { useCheckout } from "@/checkout/hooks/useCheckout";
+import { formatCheckoutMoney, summarizeCheckoutPricing } from "@/checkout/lib/checkoutPricing";
+import { EllipsisLoader } from "@/ui/components/EllipsisLoader";
 
 interface ContactPassengerFormProps {
 	onEmailChange: (email: string) => void;
 	onContinueToPayment?: () => void;
 	email: string;
 	showPhoneInput?: boolean;
+	onPassengerNamesChange?: (names: string[]) => void;
 }
 
+/**
+ * Step 1 of checkout (same as mobile): contact + passengers + terms,
+ * then continue to the Paystack payment screen.
+ */
 export const ContactPassengerForm: React.FC<ContactPassengerFormProps> = ({
 	onEmailChange,
 	onContinueToPayment,
 	email,
 	showPhoneInput = true,
+	onPassengerNamesChange,
 }) => {
+	const { checkout } = useCheckout();
 	const form = useGuestUserForm({ initialEmail: email, onContinueToPayment });
-	const { handleChange, values, isSubmitting, setFieldValue, setFieldError, errors, handleSubmit } = form;
+	const { handleChange, values, isSubmitting, setFieldValue, setFieldError, errors, handleSubmit } =
+		form;
 
 	const [termsOpen, setTermsOpen] = useState(false);
+	const [acceptedTerms, setAcceptedTerms] = useState(() =>
+		values.passengers.some((p) => p.firstName.trim() !== "" && p.lastName.trim() !== ""),
+	);
+	const [optionalEmail, setOptionalEmail] = useState("");
 
-	const [acceptedTerms, setAcceptedTerms] = useState(() => {
-		return values.passengers.some((p) => p.firstName.trim() !== "" && p.lastName.trim() !== "");
-	});
+	const pricing = useMemo(
+		() => summarizeCheckoutPricing(checkout?.lines, checkout?.totalPrice?.gross?.amount),
+		[checkout?.lines, checkout?.totalPrice?.gross?.amount],
+	);
+	const totalLabel = formatCheckoutMoney(pricing.total, pricing.currency);
+	const isFullyCovered = (pricing.total ?? 0) <= 0;
 
 	useEffect(() => {
 		const hasExistingData = values.passengers.some(
 			(p) => p.firstName.trim() !== "" && p.lastName.trim() !== "",
 		);
-		if (hasExistingData) {
-			setAcceptedTerms(true);
-		}
+		if (hasExistingData) setAcceptedTerms(true);
 	}, [values.passengers]);
 
 	useEffect(() => {
-		if (email && email !== "anonymous@chapchaptickets.com") {
+		onPassengerNamesChange?.(
+			values.passengers.map((p) => `${p.firstName} ${p.lastName}`.trim()).filter(Boolean),
+		);
+	}, [values.passengers, onPassengerNamesChange]);
+
+	useEffect(() => {
+		if (email && email !== "anonymous@chapchapticket.com") {
 			const phoneFromEmail = email.split("@")[0];
 			const formattedPhone = phoneFromEmail.startsWith("+") ? phoneFromEmail : `+${phoneFromEmail}`;
-
 			if (!values.phone || values.phone === "+") {
 				void setFieldValue("phone", formattedPhone);
 			}
@@ -54,7 +74,9 @@ export const ContactPassengerForm: React.FC<ContactPassengerFormProps> = ({
 
 	const handlePaymentClick = () => {
 		if (!acceptedTerms) {
-			alert("Veuillez accepter les conditions générales avant de continuer.");
+			alert(
+				"Veuillez accepter les Conditions Générales de ChapChap et la politique d'annulation de la compagnie.",
+			);
 			return;
 		}
 
@@ -68,11 +90,15 @@ export const ContactPassengerForm: React.FC<ContactPassengerFormProps> = ({
 			return;
 		}
 
-		const cleanPhone = currentPhone.replace("+", "");
-		const generatedEmail = `${cleanPhone}@chapchaptickets.com`;
+		const incomplete = values.passengers.some((p) => !p.firstName.trim() || !p.lastName.trim());
+		if (incomplete) {
+			alert("Veuillez remplir les noms de tous les passagers.");
+			return;
+		}
 
-		// ✅ Correction: Suppression du await (setFieldValue n'est pas "thenable")
-		// + Utilisation de void pour indiquer une promesse ignorée si nécessaire
+		const cleanPhone = currentPhone.replace("+", "");
+		const generatedEmail = optionalEmail.trim() || `${cleanPhone}@chapchapticket.com`;
+
 		void setFieldValue("email", generatedEmail);
 		onEmailChange(generatedEmail);
 		handleSubmit();
@@ -80,88 +106,143 @@ export const ContactPassengerForm: React.FC<ContactPassengerFormProps> = ({
 
 	return (
 		<FormProvider form={form}>
-			{showPhoneInput && (
-				<section className="mx-auto my-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-					<h3 className="mb-4 text-lg font-semibold text-gray-800">Informations de contact</h3>
-					<div className="phone-input-container">
-						<label className="mb-2 block text-sm font-medium text-gray-700">
-							Numéro de téléphone <span className="text-red-500">*</span>
+			<section className="mx-auto my-4 rounded-2xl border border-[#E8E9EC] bg-white p-5 shadow-sm sm:p-6">
+				<h3 className="text-lg font-bold text-[#111111]">1. Informations de contact</h3>
+				<p className="mt-1 text-sm text-[#606060]">
+					Ce numéro recevra votre e-billet par WhatsApp et SMS.
+				</p>
+
+				{showPhoneInput ? (
+					<div className="phone-input-container mt-4">
+						<label className="mb-2 block text-sm font-medium text-[#404040]">
+							Numéro de téléphone (WhatsApp / SMS) <span className="text-[#EB1700]">*</span>
 						</label>
-						<PhoneInput
-							country={"ci"}
-							onlyCountries={["ci", "ca"]}
+						<CheckoutPhoneInput
+							error={!!errors.phone}
 							value={values.phone}
 							onChange={(phone) => {
 								const formatted = phone.startsWith("+") ? phone : `+${phone}`;
 								void setFieldValue("phone", formatted);
 							}}
-							inputStyle={{
-								width: "100%",
-								height: "45px",
-								borderRadius: "8px",
-								border: errors.phone ? "1px solid #ef4444" : "1px solid #e5e7eb",
-							}}
-							buttonStyle={{
-								borderRadius: "8px 0 0 8px",
-								border: errors.phone ? "1px solid #ef4444" : "1px solid #e5e7eb",
-							}}
 							containerClass="mt-1"
 						/>
-						{errors.phone && <p className="mt-1 text-xs font-medium text-red-500">{errors.phone}</p>}
+						{errors.phone ? (
+							<p className="mt-1 text-xs font-medium text-red-500">{errors.phone}</p>
+						) : null}
 					</div>
-				</section>
-			)}
+				) : null}
 
-			<section className="mx-auto my-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-				<h3 className="mb-2 text-lg font-semibold text-gray-800">Détails du passager</h3>
-				<p className="mb-5 text-sm text-gray-600">Les noms doivent correspondre à la pièce d’identité.</p>
+				<div className="mt-4">
+					<label className="mb-2 block text-sm font-medium text-[#404040]">
+						E-mail <span className="font-normal text-[#9CA3AF]">(optionnel — reçu de paiement)</span>
+					</label>
+					<input
+						type="email"
+						value={optionalEmail}
+						onChange={(e) => setOptionalEmail(e.target.value)}
+						placeholder="exemple@email.com"
+						className="h-12 w-full rounded-xl border border-[#E2E3E7] px-3 text-sm text-[#111111] outline-none focus:border-[#A6C65A]"
+					/>
+				</div>
+			</section>
 
-				{values.passengers.map((p: Passenger, i: number) => (
-					<div key={i} className="mb-6 space-y-3 border-b pb-4 last:border-0">
-						<h4 className="text-base font-medium text-gray-700">Passager {i + 1}</h4>
-						<TextInput
-							required
-							name={`passengers[${i}].lastName`}
-							label="Nom de famille"
-							onChange={handleChange}
-						/>
-						<TextInput required name={`passengers[${i}].firstName`} label="Prénom" onChange={handleChange} />
+			<section className="mx-auto my-4 rounded-2xl border border-[#E8E9EC] bg-white p-5 shadow-sm sm:p-6">
+				<h3 className="text-lg font-bold text-[#111111]">2. Détails des passagers</h3>
+				<p className="mt-1 text-sm text-[#606060]">
+					Les noms doivent correspondre aux pièces d&apos;identité.
+				</p>
+
+				{values.passengers.map((_p: Passenger, i: number) => (
+					<div key={i} className="mt-5 space-y-3 border-b border-[#F0F1F3] pb-5 last:border-0">
+						<h4 className="text-sm font-bold uppercase tracking-wide text-[#606060]">
+							Passager {i + 1}
+							{i === 0 ? " (Principal)" : ""}
+						</h4>
+						<div className="grid gap-3 sm:grid-cols-2">
+							<TextInput
+								required
+								name={`passengers[${i}].lastName`}
+								label="Nom"
+								onChange={handleChange}
+							/>
+							<TextInput
+								required
+								name={`passengers[${i}].firstName`}
+								label="Prénom"
+								onChange={handleChange}
+							/>
+						</div>
+						<div>
+							<label className="mb-1.5 block text-sm font-medium text-[#404040]">
+								Numéro de pièce d&apos;identité{" "}
+								<span className="font-normal text-[#9CA3AF]">(CNI / Passeport — optionnel)</span>
+							</label>
+							<input
+								type="text"
+								value={values.passengers[i]?.idNumber || ""}
+								onChange={(e) => {
+									const next = values.passengers.map((passenger, idx) =>
+										idx === i ? { ...passenger, idNumber: e.target.value } : passenger,
+									);
+									void setFieldValue("passengers", next);
+								}}
+								placeholder="Ex: CI1234567890"
+								className="h-12 w-full rounded-xl border border-[#E2E3E7] px-3 text-sm outline-none focus:border-[#A6C65A]"
+							/>
+						</div>
 					</div>
 				))}
 			</section>
 
-			<section className="mx-auto my-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-				<h3 className="mb-3 text-lg font-semibold text-gray-800">Conditions générales</h3>
+			<section className="mx-auto my-4 rounded-2xl border border-[#E8E9EC] bg-white p-5 shadow-sm sm:p-6">
 				<button
 					type="button"
-					className="flex w-full items-center justify-between font-medium text-red-600"
+					className="flex w-full items-center justify-between font-medium text-[#EB1700]"
 					onClick={() => setTermsOpen(!termsOpen)}
 				>
 					<span>Conditions générales de ChapChap Tickets</span>
 					{termsOpen ? <ChevronUpIcon className="h-5 w-5" /> : <ChevronDownIcon className="h-5 w-5" />}
 				</button>
 
-				{termsOpen && (
-					<div className="mt-3 rounded-lg border border-gray-100 bg-gray-50 p-4 text-sm leading-relaxed text-gray-700">
-						Toutes les réservations sont soumises aux conditions de vente. Billets{" "}
-						<strong>non remboursables</strong> et <strong>non échangeables</strong> sauf conditions contraires
-						du transporteur.
+				{termsOpen ? (
+					<div className="mt-3 rounded-lg border border-[#F0F1F3] bg-[#FAFAFA] p-4 text-sm leading-relaxed text-[#505050]">
+						ChapChap Tickets est une plateforme de billetterie : le transport est assuré par la
+						compagnie partenaire. Billets soumis à la politique d&apos;annulation du transporteur.{" "}
+						<a
+							href="/ci/conditions"
+							target="_blank"
+							rel="noopener noreferrer"
+							className="font-semibold text-[#EB1700] underline"
+						>
+							Lire les conditions générales complètes
+						</a>
+						.
 					</div>
-				)}
+				) : null}
 
-				<div className="mt-4 flex items-center space-x-2">
+				<div className="mt-4 flex items-start space-x-2">
 					<input
 						id="acceptTerms"
 						type="checkbox"
 						checked={acceptedTerms}
 						onChange={(e) => setAcceptedTerms(e.target.checked)}
-						className="h-4 w-4 cursor-pointer rounded border-gray-300 text-secondary focus:ring-secondary"
+						className="mt-0.5 h-4 w-4 cursor-pointer rounded border-gray-300 text-[#A6C65A] focus:ring-[#A6C65A]"
 					/>
 					<label
 						htmlFor="acceptTerms"
-						className="cursor-pointer select-none text-sm font-medium text-gray-700"
+						className="cursor-pointer select-none text-sm font-medium leading-5 text-[#404040]"
 					>
-						J’accepte les conditions générales.
+						J&apos;accepte les{" "}
+						<a
+							href="/ci/conditions"
+							target="_blank"
+							rel="noopener noreferrer"
+							className="text-[#EB1700] underline"
+							onClick={(e) => e.stopPropagation()}
+						>
+							Conditions Générales de ChapChap
+						</a>{" "}
+						et la politique d&apos;annulation de la compagnie.
 					</label>
 				</div>
 
@@ -169,19 +250,24 @@ export const ContactPassengerForm: React.FC<ContactPassengerFormProps> = ({
 					type="button"
 					onClick={handlePaymentClick}
 					disabled={!acceptedTerms || isSubmitting}
-					className={`mt-6 w-full rounded-lg py-4 font-bold text-white shadow-md transition-all active:scale-[0.98] ${
+					className={`mt-6 flex h-12 w-full items-center justify-center gap-2 rounded-xl text-sm font-bold text-white transition active:scale-[0.99] ${
 						acceptedTerms && !isSubmitting
-							? "bg-secondary shadow-secondary/20 hover:bg-secondary-dark"
-							: "cursor-not-allowed bg-gray-400 shadow-none"
+							? "bg-[#EB1700] hover:bg-[#c91400]"
+							: "cursor-not-allowed bg-neutral-300"
 					}`}
 				>
 					{isSubmitting ? (
-						<div className="flex items-center justify-center gap-2">
-							<div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-							<span>Traitement...</span>
-						</div>
+						<>
+							<EllipsisLoader color="#FFFFFF" dotSize={6} />
+							<span>Préparation…</span>
+						</>
 					) : (
-						"Continuer vers le paiement"
+						<>
+							<Lock className="h-4 w-4" aria-hidden />
+							{isFullyCovered
+								? "Valider la commande"
+								: `Continuer vers le paiement${totalLabel ? ` — ${totalLabel}` : ""}`}
+						</>
 					)}
 				</button>
 			</section>

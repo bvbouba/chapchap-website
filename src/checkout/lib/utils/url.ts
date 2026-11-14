@@ -114,11 +114,12 @@ export const extractCheckoutIdFromUrl = (): string => {
 		return "";
 	}
 
-	if (typeof checkoutId !== "string") {
-		throw new Error("Checkout token does not exist");
+	if (typeof checkoutId !== "string" || !checkoutId.trim()) {
+		return "";
 	}
 
-	return checkoutId;
+	// query-string may leave trailing junk; Saleor IDs are URL-safe once encoded on navigate
+	return checkoutId.trim();
 };
 
 export const isOrderConfirmationPage = () => {

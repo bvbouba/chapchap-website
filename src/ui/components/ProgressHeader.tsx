@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronRight, CheckIcon } from "lucide-react";
+import { CheckIcon, ChevronRight } from "lucide-react";
 import { useParams, usePathname } from "next/navigation";
 import Link from "next/link";
 import { useTripSearch } from "@/context/TripSearchContext";
@@ -23,17 +23,17 @@ function getCurrentStepFromPath(pathname: string): StepKey {
 	return "depart";
 }
 
-// ✅ Correction: Export nommé au lieu de default
-export function ProgressHeader({ destinationName, date, checkout }: Props) {
+/** Booking progress: Recherche → Ma réservation → Passagers & paiement */
+export function ProgressHeader({ checkout }: Props) {
 	const pathname = usePathname();
 	const currentStep = getCurrentStepFromPath(pathname);
 	const { data } = useTripSearch();
 	const params = useParams<{ channel: string }>();
 
 	const getStepHref = (stepKey: string): string => {
-		const channel = params.channel || "ci";
+		const channel = Array.isArray(params.channel) ? params.channel[0] : params.channel;
+		if (!channel) return "/";
 
-		// 🛠️ Extraction des attributs
 		const { originId, destinationId, date: checkoutDate } = extractAttributesFromCHeckout(checkout);
 
 		if (!originId || !destinationId || !checkoutDate) {
@@ -52,88 +52,72 @@ export function ProgressHeader({ destinationName, date, checkout }: Props) {
 		}
 	};
 
-	const formattedDate = date
-		? new Date(`${date}T00:00:00Z`).toLocaleDateString("fr-FR", {
-				day: "2-digit",
-				month: "long",
-				year: "numeric",
-				timeZone: "UTC",
-			})
-		: "";
-
 	const baseSteps = [
 		{
 			key: "depart" as StepKey,
-			activeLabel: (
-				<span className="inline-flex items-end">
-					<span className="font-semibold">{`Départ vers ${destinationName}`}</span>
-					{formattedDate && <span>&nbsp;le {formattedDate}</span>}
-				</span>
-			),
-			inactiveLabel: "Départ",
+			label: "Recherche",
 		},
 		...(data?.tripType === "roundtrip"
 			? [
 					{
 						key: "return" as StepKey,
-						activeLabel: <span className="font-semibold">Retour</span>,
-						inactiveLabel: "Retour",
+						label: "Retour",
 					},
 				]
 			: []),
 		{
 			key: "summary" as StepKey,
-			activeLabel: <span className="font-semibold">Résumé du voyage</span>,
-			inactiveLabel: "Résumé",
+			label: "Ma réservation",
 		},
 		{
 			key: "checkout" as StepKey,
-			activeLabel: <span className="font-semibold">Paiement</span>,
-			inactiveLabel: "Paiement",
+			label: "Passagers & paiement",
 		},
 	];
 
 	const currentIndex = baseSteps.findIndex((s) => s.key === currentStep);
 
 	return (
-		<div className="relative flex items-center justify-center border-b border-gray-300 bg-white shadow-md">
-			<div className="flex w-full max-w-6xl items-center justify-between px-8 py-4 text-base">
-				{/* LEFT: Completed and Active steps */}
-				<div className="flex items-center gap-3">
-					{baseSteps.slice(0, currentIndex + 1).map((step, index) => {
+		<div className="border-b border-[#E8E9EC] bg-white">
+			<nav
+				aria-label="Progression de la réservation"
+				className="mx-auto flex w-full max-w-6xl items-center justify-between gap-2 overflow-x-auto px-4 py-3 sm:px-8"
+			>
+				<div className="flex min-w-0 items-center gap-1 sm:gap-2">
+					{baseSteps.map((step, index) => {
 						const isCompleted = index < currentIndex;
-						// ✅ Correction: Suppression de la variable 'active' inutilisée
+						const isCurrent = index === currentIndex;
+						const showChevron = index < baseSteps.length - 1;
 
 						return (
-							<div key={step.key} className="flex items-center gap-1">
+							<div key={step.key} className="flex shrink-0 items-center gap-1 sm:gap-2">
 								{isCompleted ? (
 									<Link
 										href={getStepHref(step.key)}
-										className="flex items-center gap-1 text-gray-600 transition-colors hover:text-primary hover:underline"
+										className="inline-flex items-center gap-1 text-sm text-[#606060] transition hover:text-[#111111] hover:underline"
 									>
-										<span className="text-base">{step.inactiveLabel}</span>
-										<CheckIcon className="h-4 w-4 text-primary" />
+										<span className="hidden sm:inline">{index + 1}.</span> {step.label}
+										<CheckIcon className="h-3.5 w-3.5 text-[#A6C65A]" aria-hidden />
 									</Link>
 								) : (
-									<div className="text-gray-900">{step.activeLabel}</div>
+									<span
+										className={
+											isCurrent
+												? "text-sm font-bold text-[#111111]"
+												: "text-sm text-[#9CA3AF]"
+										}
+									>
+										<span className="hidden sm:inline">{index + 1}.</span> {step.label}
+									</span>
 								)}
-
-								{index < currentIndex && <ChevronRight className="mx-2 h-5 w-5 text-gray-400" />}
+								{showChevron ? (
+									<ChevronRight className="h-4 w-4 text-[#D5D6DB]" aria-hidden />
+								) : null}
 							</div>
 						);
 					})}
 				</div>
-
-				{/* RIGHT: Remaining steps */}
-				<div className="hidden items-center gap-3 text-gray-400 md:flex">
-					{baseSteps.slice(currentIndex + 1).map((step) => (
-						<div key={step.key} className="flex items-center gap-2">
-							<ChevronRight className="h-5 w-5 text-gray-300" />
-							<span className="text-base opacity-60">{step.inactiveLabel}</span>
-						</div>
-					))}
-				</div>
-			</div>
+			</nav>
 		</div>
 	);
 }

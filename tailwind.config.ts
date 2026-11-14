@@ -8,8 +8,10 @@ const config: Config = {
 	theme: {
 		extend: {
 			colors: {
-				primary: { DEFAULT: "#97D700", light: "#B8F24A", dark: "#6FA300" },
-				secondary: { DEFAULT: "#d13b3b", light: "#6B6E71", dark: "#991a1b" },
+				// Aligned with customer mobile: green brand + red CTA
+				primary: { DEFAULT: "#A6C65A", light: "#C5E08A", dark: "#7FA33A" },
+				secondary: { DEFAULT: "#EB1700", light: "#FF5A48", dark: "#C91400" },
+				brand: { green: "#A6C65A", deep: "#3D5A1A", red: "#EB1700" },
 			},
 			fontFamily: {
 				sans: ["Proxima Vara", "Helvetica Neue", "Helvetica", "Arial", "sans-serif"],

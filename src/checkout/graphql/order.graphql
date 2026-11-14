@@ -8,6 +8,10 @@ fragment OrderLineFragment on OrderLine {
 	quantity
 	variant {
 		name
+		product {
+			name
+			slug
+		}
 		attributes(variantSelection: ALL) {
 			attribute {
 					name
@@ -57,7 +61,18 @@ fragment OrderFragment on Order {
 	id
 	number
 	userEmail
+	status
 	isPaid
+	customerNote
+	paymentStatus
+	metadata {
+		key
+		value
+	}
+	fulfillments {
+		id
+		status
+	}
 	discounts {
 		type
 		name

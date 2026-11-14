@@ -3,8 +3,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { registerUser, requestOTP, verifyCode } from "@/actions";
-import PhoneInput from "react-phone-input-2";
-import "react-phone-input-2/lib/style.css";
+import { CheckoutPhoneInput } from "@/checkout/components/CheckoutPhoneInput";
 import { isValidPhoneNumber } from "libphonenumber-js"; 
 
 export default function SignupForm() {
@@ -80,7 +79,7 @@ export default function SignupForm() {
         try {
             const formattedPhone = phone.startsWith("+") ? phone : `+${phone}`;
             const response = await registerUser({
-                email: `${formattedPhone}@chapchaptickets.com`,
+                email: `${formattedPhone}@chapchapticket.com`,
                 password,
                 firstName: firstName,
                 lastName: lastName,
@@ -112,15 +111,15 @@ export default function SignupForm() {
                     <form onSubmit={handleSendOTP} className="space-y-4">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">Téléphone</label>
-                            <PhoneInput
-                                country={"ci"}
-                                onlyCountries={["ci", "ca"]}
+                            <CheckoutPhoneInput
                                 value={phone}
                                 onChange={(value) => setPhone(value)}
                                 containerClass="w-full"
                                 inputClass="!w-full !h-[48px] !rounded-lg !border-gray-200 focus:!ring-2 focus:!ring-secondary !outline-none"
                                 buttonClass="!rounded-l-lg !border-gray-200"
                                 placeholder="+225..."
+                                inputStyle={{ height: "48px", borderRadius: "0.5rem" }}
+                                buttonStyle={{ borderRadius: "0.5rem 0 0 0.5rem" }}
                             />
                         </div>
                         <button 

@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import PhoneInput from "react-phone-input-2";
-import "react-phone-input-2/lib/style.css";
+import { CheckoutPhoneInput } from "@/checkout/components/CheckoutPhoneInput";
 import { useRouter } from "next/navigation";
 import { isValidPhoneNumber } from "libphonenumber-js";
 import { finalizePasswordReset, requestPasswordReset, verifyPasswordReset } from "@/actions";
@@ -71,7 +70,7 @@ export function ForgotPasswordForm() {
         }
 
         // 2. Prepare the virtual email (phone@domain.com)
-        const virtualEmail = `${fullPhone}@chapchaptickets.com`;
+        const virtualEmail = `${fullPhone}@chapchapticket.com`;
 
         startTransition(async () => {
             try {
@@ -117,12 +116,12 @@ export function ForgotPasswordForm() {
                 {step === 1 && (
                     <div className="space-y-4">
                         <p className="text-sm text-gray-600">Entrez votre numéro pour recevoir un code de réinitialisation.</p>
-                        <PhoneInput
-                            country={"ci"}
-                            onlyCountries={["ci", "ca"]}
+                        <CheckoutPhoneInput
                             value={phone}
                             onChange={setPhone}
                             inputClass="!w-full !h-[42px] !rounded !border-gray-300 !bg-neutral-50"
+                            inputStyle={{ height: "42px", borderRadius: "0.25rem" }}
+                            buttonStyle={{ borderRadius: "0.25rem 0 0 0.25rem" }}
                         />
                         <button
                             onClick={handleRequestOTP}

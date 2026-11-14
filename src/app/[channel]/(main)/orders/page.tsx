@@ -1,38 +1,34 @@
 import { CurrentUserOrderListDocument } from "@/gql/graphql";
 import { executeGraphQL } from "@/lib/graphql";
+import { resolveVoyageOperatorLogos } from "@/lib/voyageOperatorLogo";
 import { LoginForm } from "@/ui/components/LoginForm";
-import { OrderListItem } from "@/ui/components/OrderListItem";
+import { MesVoyages } from "@/ui/components/orders/MesVoyages";
+import type { VoyageOrder } from "@/lib/voyageOrders";
+
+export const metadata = {
+	title: "Mes Voyages · ChapChap Tickets",
+};
 
 export default async function OrderPage() {
-    const { me: user } = await executeGraphQL(CurrentUserOrderListDocument, {
-        cache: "no-cache",
-    });
+	const { me: user } = await executeGraphQL(CurrentUserOrderListDocument, {
+		cache: "no-cache",
+	});
 
-    if (!user) {
-        return <LoginForm />;
-    }
+	if (!user) {
+		return <LoginForm />;
+	}
 
-    const orders = user.orders?.edges || [];
+	const orders = (user.orders?.edges || []).map(({ node }) => node as unknown as VoyageOrder);
+	const operatorLogos = await resolveVoyageOperatorLogos(orders);
 
-    return (
-        <div className="mx-auto max-w-7xl p-8">
-            <h1 className="text-2xl tracking-tight text-neutral-900">
-                Les voyages de {user.firstName ? user.firstName : user.email}
-            </h1>
-
-            {orders.length === 0 ? (
-                <div className="mt-8">
-                    <div className="rounded border border-neutral-100 bg-white p-4">
-                        <div className="flex items-center">Aucun voyage trouvé</div>
-                    </div>
-                </div>
-            ) : (
-                <ul className="mt-8 space-y-6">
-                    {orders.map(({ node: order }) => {
-                        return <OrderListItem order={order} key={order.id} />;
-                    })}
-                </ul>
-            )}
-        </div>
-    );
+	return (
+		<div className="min-h-[70vh] bg-gradient-to-b from-[#F7F8F4] via-[#F3F4F1] to-[#EEEEF0]">
+			<MesVoyages
+				orders={orders}
+				operatorLogos={operatorLogos}
+				firstName={user.firstName}
+				email={user.email}
+			/>
+		</div>
+	);
 }

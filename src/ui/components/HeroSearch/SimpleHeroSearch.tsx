@@ -6,7 +6,6 @@ import { TripSearchForm, type FormValues } from "./form";
 import { type citiesType } from "./HeroSearch";
 import { type TripSearchData, useTripSearch } from "@/context/TripSearchContext";
 
-// ✅ Correction: Changement en Named Export pour satisfaire import/no-default-export
 export const SimpleHeroSearch = ({ data, cities }: { data?: TripSearchData; cities: citiesType }) => {
 	const { setData } = useTripSearch();
 	const router = useRouter();
@@ -41,31 +40,27 @@ export const SimpleHeroSearch = ({ data, cities }: { data?: TripSearchData; citi
 
 		return new Promise<void>((resolve) => {
 			startTransition(() => {
-				// ✅ Correction: Extraction sécurisée du channel pour éviter le type string[]
-				const rawChannel = params.channel || "ci";
+				const rawChannel = params.channel;
 				const channel = Array.isArray(rawChannel) ? rawChannel[0] : rawChannel;
+				if (!channel) return;
 
-				const currentPath = window.location.pathname;
-
-				// ✅ Correction: Utilisation de la variable 'channel' nettoyée dans les templates literals
-				if (currentPath.includes(`/${channel}/trips/`)) {
-					const newPath = `/${channel}/trips/${values.origin.id}/${values.destination.id}`;
-					router.push(newPath);
-				} else if (currentPath.includes(`/${channel}/categories/`)) {
-					const newPath = `/${channel}/categories/${values.origin.slug}-${values.destination.slug}`;
-					window.history.pushState(null, "", newPath);
-				}
-
-				setTimeout(resolve, 800);
+				router.push(`/${channel}/trips/${values.origin.id}/${values.destination.id}?date=${values.date}`);
+				resolve();
 			});
 		});
 	};
 
 	return (
-		<section className="relative border-y border-gray-300">
-			<div className="relative flex items-center justify-center">
-				<div className="mx-4 w-full max-w-6xl rounded-2xl bg-white p-8 text-[#44474a]">
-					<TripSearchForm onSubmit={handleSearchSubmit} data={data} cities={cities} isPending={isPending} />
+		<section className="sticky top-0 z-30 border-b border-[#E8E9EC] bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/90">
+			<div className="mx-auto w-full max-w-6xl px-3 py-2.5 sm:px-8 sm:py-3">
+				<div className="rounded-2xl border border-[#E8E9EC] bg-white px-3 py-3 shadow-sm sm:px-4">
+					<TripSearchForm
+						onSubmit={handleSearchSubmit}
+						data={data}
+						cities={cities}
+						isPending={isPending}
+						compact
+					/>
 				</div>
 			</div>
 		</section>

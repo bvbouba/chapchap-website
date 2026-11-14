@@ -1,18 +1,26 @@
 "use client";
 
-import React, { useEffect, useState, useCallback } from "react"; // ✅ Ajout de useCallback
+import React, { useEffect, useMemo, useState, useCallback } from "react";
+import { useParams } from "next/navigation";
 import { ProductList } from "../ProductList";
-import { SortingDropdown } from "../productList/FilteredProductList/SortingDropdown";
-import { type UrlSorting } from "../productList/FilteredProductList/sorting";
-import { TopPaginationInfo } from "../Pagination/TopPaginationInfo";
 import { BottomPagination } from "../Pagination/BottomPagination";
+import { EllipsisLoader } from "../EllipsisLoader";
 import { mapEdgesToItems } from "@/lib/maps";
 import {
 	type OrderDirection,
 	type ProductVariantCollectionQuery,
+	type ProductVariantListItemFragment,
 	type ProductVariantSortField,
 	type ProductVariantWhereInput,
 } from "@/gql/graphql";
+import {
+	getDepartureHour,
+	matchesDeparturePeriods,
+	type ClientSortMode,
+	type DeparturePeriod,
+	type UrlSorting,
+} from "../productList/FilteredProductList/sorting";
+import { type OperatorCardMetaMap } from "@/lib/loadOperatorLogoMap";
 
 export interface ProductCollectionProps {
 	where?: ProductVariantWhereInput;
@@ -20,40 +28,82 @@ export interface ProductCollectionProps {
 		field: ProductVariantSortField;
 		direction?: OrderDirection;
 	};
+	sortMode?: ClientSortMode;
 	allowMore?: boolean;
 	perPage?: number;
 	setCounter?: (value: number) => void;
 	originSlug: string;
 	destinationSlug: string;
 	date: string;
-	optionToggle: (field?: ProductVariantSortField, direction?: OrderDirection) => void;
-	chosen: UrlSorting | null;
+	optionToggle?: (field?: ProductVariantSortField, direction?: OrderDirection) => void;
+	chosen?: UrlSorting | null;
 	displayUpcomingTrip?: boolean;
+	periods?: DeparturePeriod[];
+	pillsSlot?: React.ReactNode;
+	toolbarSlot?: React.ReactNode;
+	operatorMeta?: OperatorCardMetaMap;
+}
+
+function getAttrValue(variant: ProductVariantListItemFragment, slug: string): string | undefined {
+	const found = variant.attributes?.find((attr) => attr.attribute?.slug === slug);
+	return found?.values?.[0]?.name ?? found?.values?.[0]?.value ?? undefined;
+}
+
+function applyClientTransforms(
+	variants: ProductVariantListItemFragment[],
+	periods: DeparturePeriod[],
+	sortMode: ClientSortMode,
+): ProductVariantListItemFragment[] {
+	let next = variants;
+	if (periods.length) {
+		next = next.filter((v) =>
+			matchesDeparturePeriods(getAttrValue(v, "departure-time"), periods),
+		);
+	}
+	if (sortMode === "earliest") {
+		next = [...next].sort((a, b) => {
+			const ha = getDepartureHour(getAttrValue(a, "departure-time"));
+			const hb = getDepartureHour(getAttrValue(b, "departure-time"));
+			if (ha == null && hb == null) return 0;
+			if (ha == null) return 1;
+			if (hb == null) return -1;
+			return ha - hb;
+		});
+	}
+	return next;
 }
 
 export const ProductCollection = ({
 	where,
 	sortBy,
+	sortMode = "chaplist",
 	setCounter,
 	allowMore = true,
-	perPage = 2,
+	perPage = 10,
 	originSlug,
 	destinationSlug,
 	date,
-	optionToggle,
-	chosen,
 	displayUpcomingTrip = false,
+	periods = [],
+	pillsSlot,
+	toolbarSlot,
+	operatorMeta = {},
 }: ProductCollectionProps) => {
+	const params = useParams<{ channel: string }>();
+	const channel = Array.isArray(params.channel) ? params.channel[0] : params.channel;
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 	const [data, setData] = useState<ProductVariantCollectionQuery | null>(null);
 
-	// ✅ Correction: fetchProducts est maintenant enveloppée dans useCallback
 	const fetchProducts = useCallback(
 		async (cursor?: string) => {
 			try {
 				setLoading(true);
 				setError(null);
+
+				if (!channel) {
+					throw new Error("Missing channel");
+				}
 
 				const updatedWhere: ProductVariantWhereInput = {
 					...where,
@@ -78,10 +128,10 @@ export const ProductCollection = ({
 					headers: { "Content-Type": "application/json" },
 					body: JSON.stringify({
 						where: updatedWhere,
-						sortBy,
+						sortBy: sortMode === "cheapest" ? sortBy : undefined,
 						perPage,
 						after: cursor,
-						channel: "ci",
+						channel,
 					}),
 				});
 
@@ -89,7 +139,6 @@ export const ProductCollection = ({
 
 				const result = (await res.json()) as ProductVariantCollectionQuery;
 
-				// On utilise la version fonctionnelle de setData pour éviter de dépendre de 'data' dans useCallback
 				setData((prevData) => {
 					const productVariants = result.productVariants;
 					if (cursor && prevData && productVariants) {
@@ -97,7 +146,10 @@ export const ProductCollection = ({
 							...result,
 							productVariants: {
 								...productVariants,
-								edges: [...(prevData.productVariants?.edges ?? []), ...(result.productVariants?.edges ?? [])],
+								edges: [
+									...(prevData.productVariants?.edges ?? []),
+									...(result.productVariants?.edges ?? []),
+								],
 							},
 						};
 					}
@@ -105,23 +157,34 @@ export const ProductCollection = ({
 				});
 			} catch (err) {
 				console.error("Erreur:", err);
-				setError("Impossible de charger les produits.");
+				setError("Impossible de charger les trajets.");
 			} finally {
 				setLoading(false);
 			}
 		},
-		[where, sortBy, originSlug, destinationSlug, date, perPage],
-	); // Dépendances de useCallback
+		[where, sortBy, sortMode, originSlug, destinationSlug, date, perPage, channel],
+	);
 
 	useEffect(() => {
 		void fetchProducts();
-	}, [fetchProducts]); // ✅ Maintenant fetchProducts peut être inclus ici en toute sécurité
+	}, [fetchProducts]);
+
+	const rawVariants = mapEdgesToItems(data?.productVariants);
+	const variants = useMemo(
+		() => applyClientTransforms(rawVariants, periods, sortMode),
+		[rawVariants, periods, sortMode],
+	);
 
 	useEffect(() => {
 		if (setCounter) {
-			setCounter(data?.productVariants?.totalCount || 0);
+			// Prefer filtered count when period filters are active.
+			const total =
+				periods.length || sortMode === "earliest"
+					? variants.length
+					: data?.productVariants?.totalCount || variants.length;
+			setCounter(total);
 		}
-	}, [data?.productVariants?.totalCount, setCounter]);
+	}, [data?.productVariants?.totalCount, variants.length, periods.length, sortMode, setCounter]);
 
 	const onLoadMore = () => {
 		const nextCursor = data?.productVariants?.pageInfo.endCursor || null;
@@ -131,38 +194,47 @@ export const ProductCollection = ({
 	};
 
 	if (error) {
-		return <div className="mx-auto max-w-7xl p-8 text-center text-red-500">{error}</div>;
+		return <div className="w-full p-8 text-center text-red-500">{error}</div>;
 	}
 
-	const variants = mapEdgesToItems(data?.productVariants);
-
 	return (
-		<div className="relative w-3/4 space-y-4 md:w-3/4">
-			{loading && (
-				<div className="absolute inset-0 z-20 flex items-center justify-center bg-white/60">
-					<div className="h-16 w-16 animate-spin rounded-full border-4 border-gray-300 border-t-primary"></div>
-				</div>
-			)}
+		<div className="relative min-w-0 flex-1 space-y-4">
+			{pillsSlot}
+			{toolbarSlot}
 
-			{variants.length > 0 && !displayUpcomingTrip ? (
-				<div className="flex items-center justify-between">
-					<SortingDropdown optionToggle={optionToggle} chosen={chosen} />
-					<TopPaginationInfo
-						itemsCount={variants.length}
-						totalCount={data?.productVariants?.totalCount || 0}
-					/>
+			{loading ? (
+				<div className="flex items-start justify-center rounded-2xl border border-[#E8E9EC] bg-white px-4 py-8">
+					<EllipsisLoader label="Préparation de vos trajets…" color="#A6C65A" />
 				</div>
 			) : null}
 
-			{variants.length > 0 ? (
-				<ProductList variants={variants} />
-			) : (
-				!loading && (
-					<div className="p-8 text-center text-gray-500">Aucun trajet trouvé pour cette destination.</div>
-				)
-			)}
+			{!loading && !displayUpcomingTrip && variants.length > 0 ? (
+				<p className="text-sm text-[#606060]">
+					Affichage de <span className="font-semibold text-[#111111]">{variants.length}</span>
+					{data?.productVariants?.totalCount && !periods.length ? (
+						<>
+							{" "}
+							sur{" "}
+							<span className="font-semibold text-[#111111]">
+								{data.productVariants.totalCount}
+							</span>
+						</>
+					) : null}{" "}
+					trajet{variants.length > 1 ? "s" : ""}
+				</p>
+			) : null}
 
-			{allowMore && data?.productVariants?.pageInfo?.hasNextPage && (
+			{!loading && variants.length > 0 ? (
+				<ProductList variants={variants} operatorMeta={operatorMeta} />
+			) : null}
+
+			{!loading && variants.length === 0 ? (
+				<div className="rounded-2xl border border-dashed border-[#E2E3E7] bg-[#FAFAFA] p-10 text-center text-[#606060]">
+					Aucun trajet trouvé pour cette sélection.
+				</div>
+			) : null}
+
+			{allowMore && data?.productVariants?.pageInfo?.hasNextPage && !loading && (
 				<BottomPagination onLoadMore={onLoadMore} pageInfo={data.productVariants.pageInfo} />
 			)}
 		</div>

@@ -43,14 +43,15 @@ export function AvailabilityProvider({ children }: { children: ReactNode }) {
 		setIsRedirecting(true);
 		setIsSoldOut(false);
 
-		const channel = params.channel || "ci";
+		const channel = Array.isArray(params.channel) ? params.channel[0] : params.channel;
 
 		const { originId, destinationId, date } = extractAttributesFromCHeckout(lastCheckoutData);
 
-		const targetUrl =
-			originId && destinationId
+		const targetUrl = channel
+			? originId && destinationId
 				? `/${channel}/trips/${originId}/${destinationId}?date=${date}`
-				: `/${channel}`;
+				: `/${channel}`
+			: "/";
 
 		window.location.href = targetUrl;
 	};

@@ -2,6 +2,7 @@ import { compact } from "lodash-es";
 import { adyenGatewayId } from "./AdyenDropIn/types";
 import { stripeGatewayId } from "./StripeElements/types";
 import { dummyGatewayId } from "./DummyDropIn/types";
+import { paystackGatewayId } from "./Paystack/types";
 import {
 	CheckoutAuthorizeStatusEnum,
 	CheckoutChargeStatusEnum,
@@ -13,7 +14,12 @@ import { type MightNotExist } from "@/checkout/lib/globalTypes";
 import { getUrl } from "@/checkout/lib/utils/url";
 import { type PaymentStatus } from "@/checkout/sections/PaymentSection/types";
 
-export const supportedPaymentGateways = [adyenGatewayId, stripeGatewayId, dummyGatewayId] as const;
+export const supportedPaymentGateways = [
+	paystackGatewayId,
+	adyenGatewayId,
+	stripeGatewayId,
+	dummyGatewayId,
+] as const;
 
 export const getFilteredPaymentGateways = (
 	paymentGateways: MightNotExist<PaymentGateway[]>,
@@ -21,7 +27,9 @@ export const getFilteredPaymentGateways = (
 	if (!paymentGateways) {
 		return [];
 	}
-	return compact(paymentGateways).filter(({ id }) => supportedPaymentGateways.includes(id as any));
+	return compact(paymentGateways).filter(({ id }) =>
+		supportedPaymentGateways.includes(id as (typeof supportedPaymentGateways)[number]),
+	);
 };
 
 export const getUrlForTransactionInitialize = () => getUrl({ query: { processingPayment: true } });
@@ -33,7 +41,6 @@ export const usePaymentStatus = ({
 	chargeStatus: CheckoutChargeStatusEnum | OrderChargeStatusEnum;
 	authorizeStatus: CheckoutAuthorizeStatusEnum | OrderAuthorizeStatusEnum;
 }): PaymentStatus => {
-	// ✅ Correction : Comparaison avec la valeur de l'Enum au lieu d'une string
 	if (
 		chargeStatus === CheckoutChargeStatusEnum.None &&
 		authorizeStatus === CheckoutAuthorizeStatusEnum.Full

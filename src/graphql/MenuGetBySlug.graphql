@@ -11,6 +11,10 @@ fragment MenuItem on MenuItem {
 		id
 		name
 		slug
+		backgroundImage {
+			url
+			alt
+		}
 	}
 	page {
 		id

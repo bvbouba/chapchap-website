@@ -10,10 +10,12 @@ import { hasErrors, useForm } from "@/checkout/hooks/useForm";
 import { useErrorMessages } from "@/checkout/hooks/useErrorMessages";
 import { CountryCode } from "@/gql/graphql";
 import { updateCheckoutContactInfo } from "@/actions";
+import { getTripLineQuantity } from "@/lib/ensurePlatformFeeInCheckout";
 
 export interface Passenger {
 	firstName: string;
 	lastName: string;
+	idNumber?: string;
 }
 
 export interface GuestUserFormData {
@@ -49,11 +51,15 @@ export const useGuestUserForm = ({ initialEmail, onContinueToPayment }: GuestUse
 	// ✅ PHASE 1: Capture data ONLY when the component first mounts.
 	// This prevents the "reverting" during submission.
 	const initialValues = useMemo(() => {
-		const quantity = checkout.lines?.[0]?.quantity || 1;
+		const quantity = getTripLineQuantity(checkout.lines);
 		const existingPassengers =
 			checkout.note?.split(";").map((p) => {
-				const [lastName, firstName] = p.split(",");
-				return { lastName: lastName || "", firstName: firstName || "" };
+				const [lastName, firstName, idNumber] = p.split(",");
+				return {
+					lastName: lastName || "",
+					firstName: firstName || "",
+					idNumber: idNumber || "",
+				};
 			}) || [];
 
 		const passengers = Array.from({ length: quantity }, (_, i) => {
@@ -61,12 +67,13 @@ export const useGuestUserForm = ({ initialEmail, onContinueToPayment }: GuestUse
 				existingPassengers[i] || {
 					firstName: checkout.billingAddress?.firstName || "",
 					lastName: checkout.billingAddress?.lastName || "",
+					idNumber: "",
 				}
 			);
 		});
 
 		return {
-			email: initialEmail || (checkout.email !== "anonymous@chapchaptickets.com" ? checkout.email : "") || "",
+			email: initialEmail || (checkout.email !== "anonymous@chapchapticket.com" ? checkout.email : "") || "",
 			phone: checkout.billingAddress?.phone || "",
 			passengers,
 		};
@@ -87,7 +94,13 @@ export const useGuestUserForm = ({ initialEmail, onContinueToPayment }: GuestUse
 				},
 				shouldAbort: ({ formData, formHelpers: { validateForm } }) => hasErrors(validateForm(formData)),
 				parse: ({ email, phone, passengers }) => {
-					const customerNote = passengers.map((p) => `${p.lastName},${p.firstName}`).join(";");
+					const customerNote = passengers
+						.map((p) => {
+							const base = `${p.lastName},${p.firstName}`;
+							const id = (p.idNumber || "").trim();
+							return id ? `${base},${id}` : base;
+						})
+						.join(";");
 					const firstPassenger = passengers[0] || { firstName: "", lastName: "" };
 					return {
 						checkoutId: checkout.id,
